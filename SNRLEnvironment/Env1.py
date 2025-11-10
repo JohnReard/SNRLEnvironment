@@ -1,5 +1,5 @@
 import jax
-import jax.numpy as jaxnumpy
+import jax.numpy as np
 import agentneuralnetwork
 #from flax import linen #maybe change this model library?
 class Action:
@@ -11,13 +11,13 @@ class Action:
         self.angle = angle
         self.cost = 0   
 class State:
-   goalpos : (int)
-   agentpos : (int)
+   goalpos : np.array
+   agentpos : np.array
    goal : bool 
    def __init__(self, goalpos, agentpos):
-         self.goalpos = goalpos
+         self.goalpos = np.array(goalpos)
          self.goal = False
-         self.agentpos = agentpos
+         self.agentpos = np.array(agentpos)
 class Policy:
     #is a function that returns an Action given an Observation
     pass
@@ -29,10 +29,10 @@ class Observation:
 class Agent:
     policy : agentneuralnetwork.AgentNeuralNetwork
     #knowledgeset : list[Observation]
-    velocity : (int)
+    velocity : int
     angle : int
     action : Action
-    agentpos : (int)
+    agentpos : np.array
     def __init__(self):
         #self.policy = Policy()
         #self.knowledgeset = []
@@ -44,7 +44,7 @@ class Agent:
     def observe(self, state : State):
         pass
     def act(self):
-        policyinput = jaxnumpy.array([self.agentpos, self.goalpos])   
+        policyinput = np.array([self.agentpos, self.goalpos])   
         self.policy.init(20,policyinput,2) #maybe should be in init? but will have to figure out how the input will go in then.
         output = self.policy.model(policyinput)
 
@@ -63,11 +63,11 @@ class Agent:
     #    )
 
 class Environment:
-    limits : (int) #change name or functionality in future? list of vectors that define limits of 2d environment.
+    limits : np.array #change name or functionality in future? list of vectors that define limits of 2d environment.
     actionspace : list[Action]
-    currentstate: State
+    currentstate : State
     agent : Agent
-    def __init__(self, limits:(int), actionspace : list[Action], initialstate : State, agent : Agent):
+    def __init__(self, limits:np.array, actionspace : list[Action], initialstate : State, agent : Agent):
         self.limits = limits
         self.actionspace = actionspace
         self.currentstate = initialstate
@@ -76,9 +76,13 @@ class Environment:
     def statestep(self):
         self.agent.observe(self.currentstate)
         self.agent.act()
-        newstate = State(self.currentstate.goalpos, self.agent.agentpos)
+        newstate = currentstate
+        newstate.agentpos += currentstate.agentpos + self.agent.velocity
+        #newstate = State(self.currentstate.goalpos, self.agent.agentpos)
         print("agent pos is:", self.agent.agentpos)
         currentstate = newstate
+        #Maybe add newstate to knowledgeset?
+        newstate = None
         if self.agent.agentpos == currentstate.goalpos:
             self.goalreached()
         

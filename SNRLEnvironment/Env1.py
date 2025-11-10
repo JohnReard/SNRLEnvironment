@@ -44,8 +44,9 @@ class Agent:
     def act(self):
         #action = policy(observations)
         action = Action(1,0) #placeholder
+        print("action velocity is:", action.velocity)
         self.velocity += action.velocity
-        self.agentpos = tuple(map(self.agentpos + self.velocity))
+        #self.agentpos = tuple(map(self.agentpos + self.velocity))
         print("velocity is:", self.velocity)
         self.angle += action.angle
 

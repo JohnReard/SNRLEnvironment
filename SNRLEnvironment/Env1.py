@@ -1,5 +1,6 @@
 import jax
 import jax.numpy as jaxnumpy
+import agentneuralnetwork
 #from flax import linen #maybe change this model library?
 class Action:
     velocity : int
@@ -26,7 +27,7 @@ class Observation:
     pass
 
 class Agent:
-    policy : Policy
+    policy : agentneuralnetwork.AgentNeuralNetwork
     #knowledgeset : list[Observation]
     velocity : (int)
     angle : int
@@ -35,6 +36,7 @@ class Agent:
     def __init__(self):
         #self.policy = Policy()
         #self.knowledgeset = []
+        self.policy = agentneuralnetwork.AgentNeuralNetwork(100,2)
         self.action = Action(1,0)#placeholder
         self.velocity = 0
         self.angle = 0
@@ -42,13 +44,15 @@ class Agent:
     def observe(self, state : State):
         pass
     def act(self):
-        #action = policy(observations)
+        policyinput = jaxnumpy.array([self.agentpos, self.goalpos])   
+        self.policy.init(20,policyinput,2) #maybe should be in init? but will have to figure out how the input will go in then.
+        output = self.policy.model(policyinput)
+
+        #use output to define action
         action = Action(1,0) #placeholder
-        print("action velocity is:", action.velocity)
         self.velocity += action.velocity
         #self.agentpos = tuple(map(self.agentpos + self.velocity))
-        print("velocity is:", self.velocity)
-        self.angle += action.angle
+        #self.angle += action.angle
 
     def assigncost():
         pass

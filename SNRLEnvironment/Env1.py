@@ -18,9 +18,6 @@ class State:
          self.goalpos = np.array(goalpos)
          self.goal = False
          self.agentpos = np.array(agentpos)
-class Policy:
-    #is a function that returns an Action given an Observation
-    pass
 class Actionset:
     actionset : list[Action]
 class Observation:
@@ -33,19 +30,28 @@ class Agent:
     angle : int
     action : Action
     agentpos : np.array
+    rng : int
+    init_rng : int
+    inp : int
+    params : int
     def __init__(self):
         #self.policy = Policy()
         #self.knowledgeset = []
+
+        #construct agent policy
         self.policy = agentneuralnetwork.AgentNeuralNetwork(100,2)
+
         self.action = Action(1,0)#placeholder
         self.velocity = 0
         self.angle = 0
         self.agentpos = (0,0)
     def observe(self, state : State):
         pass
-    def act(self):
-        policyinput = np.array([self.agentpos, self.goalpos])   
-        self.policy.init(20,policyinput,2) #maybe should be in init? but will have to figure out how the input will go in then.
+    def act(self, env):
+        policyinput = np.array([self.agentpos, env.goalpos])
+
+        #self.params = self.policy.init(self.init_rng, self.inp)
+        #maybe should be in init? but will have to figure out how the input will go in then.
         output = self.policy.model(policyinput)
 
         #use output to define action
@@ -75,7 +81,7 @@ class Environment:
         self.agent = agent #agent will have to be an already initialised object
     def statestep(self):
         self.agent.observe(self.currentstate)
-        self.agent.act()
+        self.agent.act(self)
         newstate = currentstate
         newstate.agentpos += currentstate.agentpos + self.agent.velocity
         #newstate = State(self.currentstate.goalpos, self.agent.agentpos)

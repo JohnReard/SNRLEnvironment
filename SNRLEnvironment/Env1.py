@@ -45,16 +45,22 @@ class Agent:
         self.action = Action(1,0)#placeholder
         self.velocity = 0
         self.angle = 0
-        self.agentpos = jnp.array((0,0))
+        self.agentpos = jnp.array((300,300))
     def observe(self, state : State):
         pass
     def act(self, env):
-        policyijnput = jnp.array([self.agentpos, env.goalpos])
+        policyinput = jnp.array([self.agentpos, env.goalpos])
 
         #self.params = self.policy.init(self.init_rng, self.ijnp)
         #maybe should be in init? but will have to figure out how the ijnput will go in then.
-        output = self.policy.apply(params,policyijnput) #maybe change params to a field?
-        return output
+        output = self.policy.apply(params,policyinput) #maybe change params to a field?
+        print("output:",output)
+        output = jnp.mean(output)
+        action = Action(output,0)
+        print("velocity:",self.velocity)
+        #self.velocity += action.velocity
+        print("output mean:",output)
+        return action
         #use output to define action
         #action = Action(1,0) #placeholder
         #self.velocity += action.velocity
@@ -82,7 +88,8 @@ class Environment:
         self.agent = agent #agent will have to be an already initialised object
     def statestep(self):
         self.agent.observe(self.currentstate)
-        self.agent.act(self)
+        currentaction = self.agent.act(self)
+        self.agent.velocity = currentaction.velocity
         self.newstate = self.currentstate
         self.newstate.agentpos += self.currentstate.agentpos + self.agent.velocity
         #newstate = State(self.currentstate.goalpos, self.agent.agentpos)

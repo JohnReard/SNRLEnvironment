@@ -1,6 +1,7 @@
 import jax
-import jax.numpy as np
+import jax.numpy as jnp
 import agentneuralnetwork
+from agentneuralnetwork import params, ann
 #from flax import linen #maybe change this model library?
 class Action:
     velocity : int
@@ -11,13 +12,13 @@ class Action:
         self.angle = angle
         self.cost = 0   
 class State:
-   goalpos : np.array
-   agentpos : np.array
+   goalpos : jnp.array
+   agentpos : jnp.array
    goal : bool 
    def __init__(self, goalpos, agentpos):
-         self.goalpos = np.array(goalpos)
+         self.goalpos = jnp.array(goalpos)
          self.goal = False
-         self.agentpos = np.array(agentpos)
+         self.agentpos = jnp.array(agentpos)
 class Actionset:
     actionset : list[Action]
 class Observation:
@@ -29,34 +30,34 @@ class Agent:
     velocity : int
     angle : int
     action : Action
-    agentpos : np.array
+    agentpos : jnp.array
     rng : int
     init_rng : int
-    inp : int
-    params : int
+    ijnp : int
+    #params : int
     def __init__(self):
         #self.policy = Policy()
         #self.knowledgeset = []
 
         #construct agent policy
-        self.policy = agentneuralnetwork.AgentNeuralNetwork(100,2)
+        self.policy = ann
 
         self.action = Action(1,0)#placeholder
         self.velocity = 0
         self.angle = 0
-        self.agentpos = (0,0)
+        self.agentpos = jnp.array((0,0))
     def observe(self, state : State):
         pass
     def act(self, env):
-        policyinput = np.array([self.agentpos, env.goalpos])
+        policyijnput = jnp.array([self.agentpos, env.goalpos])
 
-        #self.params = self.policy.init(self.init_rng, self.inp)
-        #maybe should be in init? but will have to figure out how the input will go in then.
-        output = self.policy.model(policyinput)
-
+        #self.params = self.policy.init(self.init_rng, self.ijnp)
+        #maybe should be in init? but will have to figure out how the ijnput will go in then.
+        output = self.policy.apply(params,policyijnput) #maybe change params to a field?
+        return output
         #use output to define action
-        action = Action(1,0) #placeholder
-        self.velocity += action.velocity
+        #action = Action(1,0) #placeholder
+        #self.velocity += action.velocity
         #self.agentpos = tuple(map(self.agentpos + self.velocity))
         #self.angle += action.angle
 
@@ -69,11 +70,11 @@ class Agent:
     #    )
 
 class Environment:
-    limits : np.array #change name or functionality in future? list of vectors that define limits of 2d environment.
+    limits : jnp.array #change name or functionality in future? list of vectors that define limits of 2d environment.
     actionspace : list[Action]
     currentstate : State
     agent : Agent
-    def __init__(self, limits:np.array, actionspace : list[Action], initialstate : State, agent : Agent):
+    def __init__(self, limits:jnp.array, actionspace : list[Action], initialstate : State, agent : Agent):
         self.limits = limits
         self.actionspace = actionspace
         self.currentstate = initialstate
@@ -82,14 +83,15 @@ class Environment:
     def statestep(self):
         self.agent.observe(self.currentstate)
         self.agent.act(self)
-        newstate = currentstate
-        newstate.agentpos += currentstate.agentpos + self.agent.velocity
+        self.newstate = self.currentstate
+        self.newstate.agentpos += self.currentstate.agentpos + self.agent.velocity
         #newstate = State(self.currentstate.goalpos, self.agent.agentpos)
         print("agent pos is:", self.agent.agentpos)
-        currentstate = newstate
+        self.currentstate = self.newstate
         #Maybe add newstate to knowledgeset?
-        newstate = None
-        if self.agent.agentpos == currentstate.goalpos:
+        self.newstate = None
+        print("agentpos:",type(self.agent.agentpos), "goalpos:", type(self.currentstate.goalpos))
+        if self.agent.agentpos[0] == self.currentstate.goalpos[0]:
             self.goalreached()
         
     def statereset():

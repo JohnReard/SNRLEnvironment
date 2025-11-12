@@ -16,6 +16,6 @@ while running:
     env.statestep()
     drawframe(env,agent, window)
     i+=1
-    if i > 20000:
+    if i > 200:
         running = False
     

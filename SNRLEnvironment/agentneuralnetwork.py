@@ -19,7 +19,7 @@ class AgentNeuralNetwork(nn.Module):
     
 key = jax.random.PRNGKey(0)
 initinput = jnp.array((1,2)) #nonce input for policy to be initialised.
-ann = AgentNeuralNetwork(2,100)
+ann = AgentNeuralNetwork(2,10)
 params = ann.init(key, initinput)
 #creates an instance of the neural network (2 = no. of inputs, 100 = no. of neurons in hidden layer, 2 = no. of outputs, rng for random initial weights)
 

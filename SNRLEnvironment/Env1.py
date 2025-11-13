@@ -19,8 +19,6 @@ class State:
          self.goalpos = jnp.array(goalpos)
          self.goal = False
          self.agentpos = jnp.array(agentpos)
-class Actionset:
-    actionset : list[Action]
 class Observation:
     pass
 
@@ -35,17 +33,17 @@ class Agent:
     init_rng : int
     ijnp : int
     #params : int
-    def __init__(self):
+    def __init__(self, initstate : State):
         #self.policy = Policy()
         #self.knowledgeset = []
 
         #construct agent policy
         self.policy = ann
-
+        self.agentpos = initstate.agentpos
         self.action = Action(1,0)#placeholder
         self.velocity = 0
         self.angle = 0
-        self.agentpos = jnp.array((300,300))
+        #self.agentpos = jnp.array((300,300))
     def observe(self, state : State):
         pass
     def act(self, env):
@@ -80,9 +78,8 @@ class Environment:
     actionspace : list[Action]
     currentstate : State
     agent : Agent
-    def __init__(self, limits:jnp.array, actionspace : list[Action], initialstate : State, agent : Agent):
+    def __init__(self, limits:jnp.array, initialstate : State, agent : Agent):
         self.limits = limits
-        self.actionspace = actionspace
         self.currentstate = initialstate
         self.goalpos = initialstate.goalpos
         self.agent = agent #agent will have to be an already initialised object
@@ -91,7 +88,10 @@ class Environment:
         currentaction = self.agent.act(self)
         self.agent.velocity = currentaction.velocity
         self.newstate = self.currentstate
-        self.newstate.agentpos += self.currentstate.agentpos + self.agent.velocity
+        print("current agent pos:", self.currentstate.agentpos)
+        if self.newstate.agentpos[0] <= self.limits[0] and self.newstate.agentpos[1] <= self.limits[1]:
+            self.newstate.agentpos += self.currentstate.agentpos + self.agent.velocity
+            
         #newstate = State(self.currentstate.goalpos, self.agent.agentpos)
         print("agent pos is:", self.agent.agentpos)
         self.currentstate = self.newstate
@@ -104,7 +104,8 @@ class Environment:
     def statereset():
         pass
     def episodeend(self):
-        agent.assigncost()
-        self.statereset()
+        pass
+        #self.agent.assigncost()
+        #self.statereset()
     def goalreached(self):
         self.episodeend()

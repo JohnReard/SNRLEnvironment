@@ -28,33 +28,36 @@ class Agent:
     velocity : int
     angle : int
     action : Action
-    agentpos : jnp.array
     rng : int
     init_rng : int
-    ijnp : int
+    inp : int
+    agentposlist = []
+    #velocitylimit : int
     #params : int
     def __init__(self, initstate : State):
         #self.policy = Policy()
         #self.knowledgeset = []
-
         #construct agent policy
         self.policy = ann
-        self.agentpos = initstate.agentpos
         self.action = Action(1,0)#placeholder
         self.velocity = 0
         self.angle = 0
+        #self.velocitylimit = self.policy.velocitylimit
         #self.agentpos = jnp.array((300,300))
     def observe(self, state : State):
         pass
     def act(self, env):
-        policyinput = jnp.array([self.agentpos, env.goalpos])
-
+        policyinput = jnp.array([env.currentstate.agentpos[0],env.currentstate.agentpos[1], env.goalpos[0], env.goalpos[1]])
+        self.agentposlist.append(env.currentstate.agentpos)
+        print("policyinput:", policyinput) #self.agentpos not changing.
         #self.params = self.policy.init(self.init_rng, self.ijnp)
         #maybe should be in init? but will have to figure out how the ijnput will go in then.
         output = self.policy.apply(params,policyinput) #maybe change params to a field?
         print("output:",output)
-        output = jnp.mean(output)
-        action = Action(output,0)
+        #output = jnp.mean(output)
+        #output = jnp.clip(output, -self.velocitylimit, self.velocitylimit)
+        action = Action(output*100,0)
+        print("output:",output)
         print("velocity:",self.velocity)
         #self.velocity += action.velocity
         print("output mean:",output)
@@ -77,28 +80,34 @@ class Environment:
     limits : jnp.array #change name or functionality in future? list of vectors that define limits of 2d environment.
     actionspace : list[Action]
     currentstate : State
+    velocitylimit : int
     agent : Agent
-    def __init__(self, limits:jnp.array, initialstate : State, agent : Agent):
+    agentposlist = []
+    agenvelocitylist = []
+    def __init__(self, limits:jnp.array, initialstate : State, agent : Agent,velocitylimit : int):
         self.limits = limits
         self.currentstate = initialstate
         self.goalpos = initialstate.goalpos
-        self.agent = agent #agent will have to be an already initialised object
+        self.agent = agent #agent will have to be an already initialised 
+        self.velocitylimit = velocitylimit
     def statestep(self):
         self.agent.observe(self.currentstate)
         currentaction = self.agent.act(self)
         self.agent.velocity = currentaction.velocity
         self.newstate = self.currentstate
-        print("current agent pos:", self.currentstate.agentpos)
-        if self.newstate.agentpos[0] <= self.limits[0] and self.newstate.agentpos[1] <= self.limits[1]:
-            self.newstate.agentpos += self.currentstate.agentpos + self.agent.velocity
+        self.agentposlist.append(self.currentstate.agentpos.astype(int))
+        self.agenvelocitylist.append(self.agent.velocity.astype(int))
+        if self.newstate.agentpos[0] <= self.limits[0] and self.newstate.agentpos[1] <= self.limits[1] and self.newstate.agentpos[0] >= 0 and self.newstate.agentpos[1] >= 0:
+            
+            self.newstate.agentpos += self.agent.velocity
             
         #newstate = State(self.currentstate.goalpos, self.agent.agentpos)
-        print("agent pos is:", self.agent.agentpos)
+        #print("agent pos is:", self.currentstate.agentpos.astype(int))
         self.currentstate = self.newstate
         #Maybe add newstate to knowledgeset?
         self.newstate = None
-        print("agentpos:",type(self.agent.agentpos), "goalpos:", type(self.currentstate.goalpos))
-        if self.agent.agentpos[0] == self.currentstate.goalpos[0]:
+        #print("agentpos:",type(self.currentstate.agentpos), "goalpos:", type(self.currentstate.goalpos))
+        if self.currentstate.agentpos[0] == self.currentstate.goalpos[0]:
             self.goalreached()
         
     def statereset():

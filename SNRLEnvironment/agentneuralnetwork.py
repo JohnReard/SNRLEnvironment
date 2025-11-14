@@ -2,21 +2,22 @@ from flax import linen as nn
 import jax
 import jax.numpy as jnp
 class AgentNeuralNetwork(nn.Module):
-    hiddenlayers : int
-    #velocitylimit : int
+    numhiddenlayers : int
     outputs : int
-    #def __init__(self, hiddenlayers, outputs, velocitylimit):
-    #    self.hiddenlayers = hiddenlayers
-    #    self.outputs = outputs
-    #    self.velocitylimit = velocitylimit
-        
+    def setup(self, layerwidth : list[int], numhiddenlayers : int):
+        self.layerwidth = jnp.array(layerwidth) #no. of neurons per layer, can be different per layer
+        self.numhiddenlayers = numhiddenlayers
+        self.layers = jnp.array(nn.Dense)
+        for width in layerwidth:#creates layers array of Dense objects for each width given
+            layer = nn.Dense(width)
+            self.layers.append(layer)
+
     @nn.compact #removes need for setup, best for small models so maybe change later?
+    #below function is called when model() is called.
     def __call__(self, x):
-        self.hiddenlayers : int
-        self.outputs : int
-        x = nn.Dense(self.hiddenlayers)(x)
-        x = nn.tanh(x)
-        x = nn.Dense(self.outputs)(x)
+        for layer in self.layers:
+            x = layer(x)#x (input) = output of layer
+            x = nn.relu(x)#x = output of activation function
         return x
     #def output(params, inp, model):
     #   output = model.apply(params, inp)

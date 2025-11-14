@@ -48,11 +48,12 @@ class Agent:
         pass
     def act(self, env):
         policyinput = jnp.array([env.currentstate.agentpos[0],env.currentstate.agentpos[1], env.goalpos[0], env.goalpos[1]])
+        policyinput.reshape(1,-1)
         self.agentposlist.append(env.currentstate.agentpos)
         print("policyinput:", policyinput) #self.agentpos not changing.
         #self.params = self.policy.init(self.init_rng, self.ijnp)
         #maybe should be in init? but will have to figure out how the ijnput will go in then.
-        output = self.policy.apply(params,policyinput) #maybe change params to a field?
+        output = self.policy.apply(params,policyinput) #maybe change params to something else
         print("output:",output)
         #output = jnp.mean(output)
         #output = jnp.clip(output, -self.velocitylimit, self.velocitylimit)

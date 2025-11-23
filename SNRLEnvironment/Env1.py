@@ -1,6 +1,7 @@
 import jax
 import jax.numpy as jnp
 import agentneuralnetwork
+from jax import pmap
 from agentneuralnetwork import params, ann
 #from flax import linen #maybe change this model library?
 class Action:
@@ -48,7 +49,7 @@ class Agent:
         pass
     def act(self, env):
         policyinput = jnp.array([env.currentstate.agentpos[0],env.currentstate.agentpos[1], env.goalpos[0], env.goalpos[1]])
-        policyinput.reshape(1,-1)
+        #policyinput.reshape(1,-1)
         self.agentposlist.append(env.currentstate.agentpos)
         print("policyinput:", policyinput) #self.agentpos not changing.
         #self.params = self.policy.init(self.init_rng, self.ijnp)
@@ -91,7 +92,9 @@ class Environment:
         self.goalpos = initialstate.goalpos
         self.agent = agent #agent will have to be an already initialised 
         self.velocitylimit = velocitylimit
+        self.devicecount = jax.device_count()
     def statestep(self):
+        
         self.agent.observe(self.currentstate)
         currentaction = self.agent.act(self)
         self.agent.velocity = currentaction.velocity

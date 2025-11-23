@@ -1,7 +1,7 @@
 from Env1 import Environment, State, Agent, Action
 from renderer import drawframe, drawwindow
 
-initialstate = State((500,300),(40,300))
+initialstate = State((500,300),(400,300))
 agent = Agent(initialstate)
 windowwidth = 600
 windowheight = 600

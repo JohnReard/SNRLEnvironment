@@ -104,16 +104,9 @@ class Environment:
         #self.agent.velocity = currentaction.velocity #parallelise this
         print("agentvelocity:", self.agent.velocity, "currentactionvelocity:", currentaction.velocity)
         #get instances of environment running in parallel, get vmap function updating velocity for a COLLECTION of environments.
-        #now need to parallelise this for loop
-        for(environment in environments):
-            updatevelocity(environment)
-            vmap(updatevelocity)(environments)
-        def updatevelocity(environment):#might not be vectorisable because might not be a pure function?
-            environment.agent.velocity = vmap(lambda x, y : x + y)(environment.agent.velocity, environment.currentaction.velocity)
-        
-        
-        self.agent.velocity = jax.vmap(lambda x, y : x + y)(self.agent.velocity, currentaction.velocity)
-        jax.vmap()(environments[i].agent.velocity)
+        #should update velocity of all environments, now just need to create environments collection.
+        jax.vmap(updatevelocity)(environments)
+        #self.agent.velocity = jax.vmap(lambda x, y : x + y)(self.agent.velocity, currentaction.velocity)
         self.newstate = self.currentstate
         self.agentposlist.append(self.currentstate.agentpos.astype(int))
         self.agenvelocitylist.append(self.agent.velocity.astype(int))
@@ -127,7 +120,8 @@ class Environment:
         #print("agentpos:",type(self.currentstate.agentpos), "goalpos:", type(self.currentstate.goalpos))
         if self.currentstate.agentpos[0] == self.currentstate.goalpos[0]:
             self.goalreached()
-        
+    def updatevelocity(environment):#might not be vectorisable because might not be a pure function?
+        environment.agent.velocity = jax.vmap(lambda x, y : x + y)(environment.agent.velocity, environment.currentaction.velocity)
     def statereset():
         pass
     def episodeend(self):

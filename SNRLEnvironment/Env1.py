@@ -1,15 +1,24 @@
 import jax
 import jax.numpy as jnp
 import agentneuralnetwork
+import random
 from agentneuralnetwork import params, ann
 #from flax import linen #maybe change this model library?
+devicecount = jax.device_count()
+devices = jax.devices()
+
+def addsclrs(x, y):
+    return x+y
+
 class Action:
-    velocity : int
+    velocity : jnp.array #might need to be a scalar for parallelisation
     angle : int
     cost : float
-    def __init__(self, velocity, angle):
-        self.velocity = velocity
-        self.angle = angle
+    def __init__(self, velocityx, velocityy):
+        print("Action velocity:",velocityx,velocityy)
+        #velocity = int(velocity)
+        self.velocity = jnp.array([velocityx,velocityy])
+        self.angle = 0
         self.cost = 0   
 class State:
    goalpos : jnp.array
@@ -24,24 +33,22 @@ class Observation:
 
 class Agent:
     policy : agentneuralnetwork.AgentNeuralNetwork
-    #knowledgeset : list[Observation]
-    velocity : int
+    velocity : jnp.array
     angle : int
     action : Action
     rng : int
     init_rng : int
     inp : int
-    agentposlist = []
     #velocitylimit : int
-    #params : int
     def __init__(self, initstate : State):
         #self.policy = Policy()
         #self.knowledgeset = []
         #construct agent policy
         self.policy = ann
-        self.action = Action(1,0)#placeholder
-        self.velocity = 0
+        self.action = Action(1,1)#placeholder
+        self.velocity = jnp.array([0,0])
         self.angle = 0
+        self.agentposlist = []
         #self.velocitylimit = self.policy.velocitylimit
         #self.agentpos = jnp.array((300,300))
     def observe(self, state : State):
@@ -52,11 +59,11 @@ class Agent:
         print("policyinput:", policyinput) #self.agentpos not changing.
         #self.params = self.policy.init(self.init_rng, self.ijnp)
         #maybe should be in init? but will have to figure out how the ijnput will go in then.
-        output = self.policy.apply(params,policyinput) #maybe change params to a field?
+        output = jnp.array((random.randint(1,10),random.randint(1,10))) #maybe change params to a field?
         print("output:",output)
         #output = jnp.mean(output)
         #output = jnp.clip(output, -self.velocitylimit, self.velocitylimit)
-        action = Action(output*100,0)
+        action = Action(output[0],output[1])
         print("output:",output)
         print("velocity:",self.velocity)
         #self.velocity += action.velocity
@@ -84,6 +91,7 @@ class Environment:
     agent : Agent
     agentposlist = []
     agenvelocitylist = []
+    
     def __init__(self, limits:jnp.array, initialstate : State, agent : Agent,velocitylimit : int):
         self.limits = limits
         self.currentstate = initialstate
@@ -93,14 +101,14 @@ class Environment:
     def statestep(self):
         self.agent.observe(self.currentstate)
         currentaction = self.agent.act(self)
-        self.agent.velocity = currentaction.velocity
+        #self.agent.velocity = currentaction.velocity #parallelise this
+        print("agentvelocity:", self.agent.velocity, "currentactionvelocity:", currentaction.velocity)
+        self.agent.velocity = jax.vmap(lambda x, y : x + y)(self.agent.velocity, currentaction.velocity)
         self.newstate = self.currentstate
         self.agentposlist.append(self.currentstate.agentpos.astype(int))
         self.agenvelocitylist.append(self.agent.velocity.astype(int))
         if self.newstate.agentpos[0] <= self.limits[0] and self.newstate.agentpos[1] <= self.limits[1] and self.newstate.agentpos[0] >= 0 and self.newstate.agentpos[1] >= 0:
-            
-            self.newstate.agentpos += self.agent.velocity
-            
+            self.newstate.agentpos += self.agent.velocity   
         #newstate = State(self.currentstate.goalpos, self.agent.agentpos)
         #print("agent pos is:", self.currentstate.agentpos.astype(int))
         self.currentstate = self.newstate

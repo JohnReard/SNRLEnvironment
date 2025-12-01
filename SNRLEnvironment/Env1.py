@@ -103,7 +103,17 @@ class Environment:
         currentaction = self.agent.act(self)
         #self.agent.velocity = currentaction.velocity #parallelise this
         print("agentvelocity:", self.agent.velocity, "currentactionvelocity:", currentaction.velocity)
+        #get instances of environment running in parallel, get vmap function updating velocity for a COLLECTION of environments.
+        #now need to parallelise this for loop
+        for(environment in environments):
+            updatevelocity(environment)
+            vmap(updatevelocity)(environments)
+        def updatevelocity(environment):#might not be vectorisable because might not be a pure function?
+            environment.agent.velocity = vmap(lambda x, y : x + y)(environment.agent.velocity, environment.currentaction.velocity)
+        
+        
         self.agent.velocity = jax.vmap(lambda x, y : x + y)(self.agent.velocity, currentaction.velocity)
+        jax.vmap()(environments[i].agent.velocity)
         self.newstate = self.currentstate
         self.agentposlist.append(self.currentstate.agentpos.astype(int))
         self.agenvelocitylist.append(self.agent.velocity.astype(int))

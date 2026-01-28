@@ -1,20 +1,17 @@
+import random
 import jax
 import jax.numpy as jnp
 
 devicecount = jax.device_count()
 devices = jax.devices()
+i=0
+
+def printtest(x):
+    test = jnp.array((random.randint(1,10)*100,random.randint(1,10)*100))
+    return test
+while i < 10:
+    testarray = jax.vmap(printtest)(jnp.array([1, 2]))
+    print("testarray: ", testarray)
+    i+=1
 
 
-def addsclrs(x,y):
-    return x+y
-
-input1 = jnp.array([10,2,2,2])
-input2 = jnp.array([10,2,2,2])
-input1=jnp.reshape(input1,(2,2))
-input2=jnp.reshape(input2,(2,2))
-print("Dimensions:",input1.ndim, input2.ndim,"Shapes:",input1.shape, input2.shape)
-print("input1:", input1.shape)
-print("input2:", input2.shape)
-print("Devices: ", devices)
-
-print(jax.pmap(addsclrs)(input1,input2))

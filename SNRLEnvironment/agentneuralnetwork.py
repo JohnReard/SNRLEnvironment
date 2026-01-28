@@ -1,31 +1,38 @@
-from flax import linen as nn
+#from flax import linen as nn
+from flax import nnx as nnx
 import jax
 import jax.numpy as jnp
-class AgentNeuralNetwork(nn.Module):
-    hiddenlayers : int
-    #velocitylimit : int
-    outputs : int
-    #def __init__(self, hiddenlayers, outputs, velocitylimit):
-    #    self.hiddenlayers = hiddenlayers
-    #    self.outputs = outputs
-    #    self.velocitylimit = velocitylimit
-        
-    @nn.compact #removes need for setup, best for small models so maybe change later?
+class AgentNeuralNetwork(nnx.Module):
+    #hiddenlayers : int
+    #outputs : int
+    def __init__(self, rngs): ## DUMMY PLACEHOLDER, implement later
+        self.linear1 = nnx.Linear(2,3, rngs=rngs)   
+        self.linear2 = nnx.Linear(2,3, rngs=rngs)   
     def __call__(self, x):
-        self.hiddenlayers : int
-        self.outputs : int
-        x = nn.Dense(self.hiddenlayers)(x)
-        x = nn.tanh(x)
-        x = nn.Dense(self.outputs)(x)
+        x = self.linear1(x)
+        x = nnx.relu(x)
+        x = self.linear2(x)
         return x
+    def test(self):
+        print(42)
+        
+    #def __call__(self, x):
+    #    self.hiddenlayers : int
+    #    self.outputs : int
+    #    x = nnx.linear(x)
+    #    x = nnx.tanh(x) #what does dropout do? what do these functions in call() do?
+    #    x = nnx.Dense(self.outputs)(x)
+    #    return x
     #def output(params, inp, model):
     #   output = model.apply(params, inp)
     #    return output
+
+#CREATE A BLOCK AND MODEL CLASS
     
 key = jax.random.PRNGKey(0) 
 initinput = jnp.ones((1,4)) #nonce input for policy to be initialised.
-ann = AgentNeuralNetwork(50,2) #no. of inputs, no. of neurons in hidden layer
-params = ann.init(key, initinput)
+ann = AgentNeuralNetwork(rngs = nnx.Rngs(0)) #seed neural net with rng
+#params = ann.init(key, initinput)
 #creates an instance of the neural network (2 = no. of inputs, 100 = no. of neurons in hidden layer, 2 = no. of outputs, rng for random initial weights)
 
 

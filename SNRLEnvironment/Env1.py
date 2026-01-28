@@ -1,9 +1,12 @@
+from dataclasses import dataclass
+import dataclasses
 import jax
 import agentneuralnetwork
 import random
 import jax.numpy as jnp
-from agentneuralnetwork import params, ann
-#from flax import linen #maybe change this model library?
+from agentneuralnetwork import ann 
+
+
 devicecount = jax.device_count()
 devices = jax.devices()
 
@@ -14,20 +17,18 @@ class Action:
     velocity : jnp.array #might need to be a scalar for parallelisation
     angle : int
     cost : float
+    #consider making this into a jnp.array for vectorisation?
     def __init__(self, velocityx, velocityy):
         print("Action velocity:",velocityx,velocityy)
         #velocity = int(velocity)
         self.velocity = jnp.array([velocityx,velocityy])
         self.angle = 0
-        self.cost = 0   
+        self.cost = 0
+@dataclass   
 class State:
    goalpos : jnp.array
    agentpos : jnp.array
-   goal : bool 
-   def __init__(self, goalpos, agentpos):
-         self.goalpos = jnp.array(goalpos)
-         self.goal = False
-         self.agentpos = jnp.array(agentpos)
+   #goal : bool change to an int?
 class Observation:
     pass
 
@@ -40,7 +41,7 @@ class Agent:
     init_rng : int
     inp : int
     #velocitylimit : int
-    def __init__(self, initstate : State):
+    def __init__(self, initialstate : State):
         #self.policy = Policy()
         #self.knowledgeset = []
         #construct agent policy
@@ -51,17 +52,17 @@ class Agent:
         self.agentposlist = []
         #self.velocitylimit = self.policy.velocitylimit
         #self.agentpos = jnp.array((300,300))
+    @jax.jit
     def observe(self, state : State):
         pass
+    @jax.jit
     def act(self, env):
         policyinput = jnp.array([env.currentstate.agentpos[0],env.currentstate.agentpos[1], env.goalpos[0], env.goalpos[1]])
-        self.agentposlist.append(env.currentstate.agentpos)
         #self.agentpos not changing.
         #self.params = self.policy.init(self.init_rng, self.ijnp)
         #maybe should be in init? but will have to figure out how the ijnput will go in then.
-        output = jnp.array((random.randint(1,10),random.randint(1,10))) #maybe change params to a field?
-        print("output:", output)
-        output = jax.vmap(lambda x : x*100)(output)
+
+        #output = jax.vmap(lambda x : x*100)(output)
         action = Action(output[0],output[1])
         return action
         #use output to define action
@@ -69,43 +70,29 @@ class Agent:
         #self.velocity += action.velocity
         #self.agentpos = tuple(map(self.agentpos + self.velocity))
         #self.angle += action.angle
-
+    @jax.jit
     def assigncost():
         pass
-def statestep(env):
+
+def statestep(envstate,currentaction):
     #self.agent.observe(self.currentstate)
-    currentaction = env.agent.act(env)
-    newvelocity = addvelocity(env, currentaction)
-    newstate = State(env.currentstate.goalpos,newvelocity) 
-    if env.currentstate.agentpos[0] == env.currentstate.goalpos[0]:
-        env.goalreached()
-        env.currentstate = newstate
-    else:
-        print("newstate:",newstate.agentpos)
-        env.currentstate = newstate
-def addvelocity(environment,currentaction):#might not be vectorisable because might not be a pure function?
-        newvelocity = jax.vmap(lambda x, y : x + y)(environment.agent.velocity, currentaction.velocity)
+    #currentaction = env.agent.act(env)
+    newvelocity = addvelocity(envstate[1], currentaction) #envstate[1] is the agent velocity
+    newstate = [envstate[0],newvelocity]
+    #if envstate[1][0] == envstate[0][0]:
+    #    #env.goalreached()
+    #    return newstate
+    #else:
+    return newstate
+def addvelocity(a,b):#might not be vectorisable because might not be a pure function?
+        newvelocity = jax.vmap(lambda x, y : x + y)(a, b)
         return newvelocity
-class Environment:
-    limits : jnp.array #change name or functionality in future? list of vectors that define limits of 2d environment.
-    actionspace : list[Action]
-    currentstate : State
-    velocitylimit : int
-    agent : Agent
-    agentposlist = []
-    agenvelocitylist = []
-    
-    def __init__(self, limits:jnp.array, initialstate : State, agent : Agent,velocitylimit : int):
-        self.limits = limits
-        self.currentstate = initialstate
-        self.goalpos = initialstate.goalpos
-        self.agent = agent #agent will have to be an already initialised 
-        self.velocitylimit = velocitylimit
-    def statereset():
-        pass
-    def episodeend(self):
-        pass
-        #self.agent.assigncost()
-        #self.statereset()
-    def goalreached(self):
-        self.episodeend()
+@jax.tree_util.register_dataclass
+@dataclasses.dataclass
+class EnvCollection:
+    envlimits : jnp.array #jnp.array of arrays
+    envstates : jnp.array #jnp.array of arrays
+    velocitylimits : jnp.array #jnp.array of ints
+    #agent : Agent
+    #name : str
+

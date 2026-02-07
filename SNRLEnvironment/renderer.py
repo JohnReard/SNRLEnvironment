@@ -1,22 +1,49 @@
-import pygame
+import tensorcanvas as tc
+import matplotlib.pyplot as plt
+import jax.numpy as jnp
+import matplotlib.animation as animation
 
-pygame.init()
-def drawwindow(windowheight, windowwidth):
-    window = pygame.display.set_mode((windowwidth, windowheight))
-    window.fill((255, 255, 255))
+
+def drawwindow(height, width):
+    window = jnp.zeros([height, width, 3]) #what is channels doing?
     return window
 
-def drawframe(env, agent, window):
-    window.fill((255, 255, 255))
-    #draw agent
-    print("agentpos",env.currentstate.agentpos[0], env.currentstate.agentpos[1])
-    #has to be drawn as cartesian, will be polar in Env1 and others.
-    pygame.draw.rect(window, (0, 0, 255), [float(env.currentstate.agentpos[0])/100, float(env.currentstate.agentpos[1])/100, 20, 20], 0)
-    #draw goal
-    pygame.draw.rect(window, (0, 255, 0), [env.currentstate.goalpos[0],env.currentstate.goalpos[1], 30, 30], 0)
-    pygame.display.update()
-    #agent is blue goal is green
-    #if event.type == pygame.QUIT:
-    #   running = False
+def showplt(window):
+    print("window shape: ", window.shape)
+    #window = jnp.permute_dims(window, (1,0,2))#changes dimensions of array to valid dims for show()
+    print("window type: ", type(window))
+    #plt.plot(window)
+    window = jnp.array(window)
+    print(window)
+    plt.imshow(window)
+    plt.show()
 
-    #pygame.quit()
+def drawframe(goalvel, agentvel, window,i):
+    #draw agent
+    agent_radius = 7.0
+    agent_colour = jnp.array([0.1,0.1,0.8])
+    #polar coordinates??
+    ax = int(agentvel[0])
+    ay = int(agentvel[1])
+    window = tc.draw_circle(ax,ay,agent_radius,agent_colour,window)
+    #draw goal
+    goal_radius = 10.0 + i
+    goal_colour = jnp.array([0.1,0.8,0.2])
+    window = tc.draw_circle(goalvel[0],goalvel[1],goal_radius,goal_colour,window)
+    print("Window shape:", window.shape)
+    return window
+    #plt.tight_layout()
+    
+def update(frames,i ):
+    x=(frames[i][0])
+    y=(frames[i][1])
+    #on the first frame draw the window and image
+    #if i == 0:
+    #    ax.imshow(frames[i], animated=True)
+    #on every(maybe else instead?) frame draw image
+    #anim.append(frames[i])
+    #graph.set_data(x, y)
+    plt.plot(x,y)
+    i+=1
+    
+    #agent is blue goal is green

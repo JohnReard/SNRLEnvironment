@@ -28,7 +28,7 @@ class Action:
 class State:
    goalpos : jnp.array
    agentpos : jnp.array
-   #goal : bool change to an int?
+
 class Observation:
     pass
 
@@ -50,26 +50,6 @@ class Agent:
         self.velocity = jnp.array([0,0])
         self.angle = 0
         self.agentposlist = []
-        #self.velocitylimit = self.policy.velocitylimit
-        #self.agentpos = jnp.array((300,300))
-    @jax.jit
-    def observe(self, state : State):
-        pass
-    @jax.jit
-    def act(self, env):
-        policyinput = jnp.array([env.currentstate.agentpos[0],env.currentstate.agentpos[1], env.goalpos[0], env.goalpos[1]])
-        #self.agentpos not changing.
-        #self.params = self.policy.init(self.init_rng, self.ijnp)
-        #maybe should be in init? but will have to figure out how the ijnput will go in then.
-
-        #output = jax.vmap(lambda x : x*100)(output)
-        action = Action(output[0],output[1])
-        return action
-        #use output to define action
-        #action = Action(1,0) #placeholder
-        #self.velocity += action.velocity
-        #self.agentpos = tuple(map(self.agentpos + self.velocity))
-        #self.angle += action.angle
     @jax.jit
     def assigncost():
         pass
@@ -93,6 +73,4 @@ class EnvCollection:
     envlimits : jnp.array #jnp.array of arrays
     envstates : jnp.array #jnp.array of arrays
     velocitylimits : jnp.array #jnp.array of ints
-    #agent : Agent
-    #name : str
 

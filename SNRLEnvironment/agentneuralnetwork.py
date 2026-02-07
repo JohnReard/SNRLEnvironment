@@ -1,4 +1,4 @@
-#from flax import linen as nn
+
 from flax import nnx as nnx
 import jax
 import jax.numpy as jnp
@@ -35,7 +35,3 @@ ann = AgentNeuralNetwork(rngs = nnx.Rngs(0)) #seed neural net with rng
 #params = ann.init(key, initinput)
 #creates an instance of the neural network (2 = no. of inputs, 100 = no. of neurons in hidden layer, 2 = no. of outputs, rng for random initial weights)
 
-
-
-
-#to instantiate: (maybe put in training.py?)

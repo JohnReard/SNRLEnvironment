@@ -57,20 +57,24 @@ class Agent:
 def statestep(envstate,currentaction):
     #self.agent.observe(self.currentstate)
     #currentaction = env.agent.act(env)
-    newvelocity = addvelocity(envstate[1], currentaction) #envstate[1] is the agent velocity
-    newstate = [envstate[0],newvelocity]
+    newcoords = addvelocity(envstate[1], currentaction) #envstate[1] is the agent velocity
+    newstate = [envstate[0],newcoords]
     #if envstate[1][0] == envstate[0][0]:
     #    #env.goalreached()
     #    return newstate
     #else:
     return newstate
 def addvelocity(a,b):#might not be vectorisable because might not be a pure function?
-        newvelocity = jax.vmap(lambda x, y : x + y)(a, b)
-        return newvelocity
+        newcoords = jax.vmap(lambda x, y : x + y)(a, b)
+        
+        jnp.clip(arr=newcoords,min=-600*64, max=600*64) #Clip x coords #LIMITS ARE HARDCODED, CHANGE IN FUTURE
+        return newcoords
+def vecclipvel(coord, min, max):
+    jnp.clip(coord)
 @jax.tree_util.register_dataclass
 @dataclasses.dataclass
 class EnvCollection:
     envlimits : jnp.array #jnp.array of arrays
     envstates : jnp.array #jnp.array of arrays
-    velocitylimits : jnp.array #jnp.array of ints
+    coordlimits : jnp.array #jnp.array of ints
 

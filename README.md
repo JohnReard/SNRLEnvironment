@@ -13,6 +13,8 @@ FUTURE:
 
 In Env1.py:
 
+- Limits are currently hardcoded into addvelocity, change this in future so the limits can be set universally.
+
 
 In agentneuralnetwork.py:
 

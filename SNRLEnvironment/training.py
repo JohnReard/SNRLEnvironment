@@ -57,6 +57,7 @@ while running:
     newstates = jax.vmap(statestep)(currentstates,actions)
     currentstates = jnp.array(newstates)
     print("drawn states: ", currentstates[0][0],currentstates[0][1])
+    
     window = drawframe(currentstates[0][0],currentstates[0][1], window, i)
     i+=1
     #image = ax.imshow(window,animated=True)

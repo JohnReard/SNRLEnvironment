@@ -30,7 +30,9 @@ def drawframe(goalvel, agentvel, window,i):
     goal_radius = 10.0 + i
     goal_colour = jnp.array([0.1,0.8,0.2])
     window = tc.draw_circle(goalvel[0],goalvel[1],goal_radius,goal_colour,window)
-    print("Window shape:", window.shape)
+    if([goalvel[0],goalvel[1]]==[agentvel[0],agentvel[1]]):
+        print("vels are equal")
+    print("Window shape:", goalvel)
     return window
     #plt.tight_layout()
     

@@ -7,8 +7,19 @@ devicecount = jax.device_count()
 devices = jax.devices()
 i=0
 print(devices)
-jax.nn.relu([5,5])
-print("4 % -4 =: ", 4 % 3)
+def myfunc(arr1, arr2):
+    print("arr1 and arr2 = :", arr1.shape, " ", arr2.shape)
+    newcoords = jax.vmap(lambda x, y : x + y)(arr1, arr2) #vmap arguments must be jnp types or arrays of jnp types (i.e pytrees with leaves of jnp types)
+    print("newcoords are: ", newcoords)
+    returnedcoords = jnp.clip(newcoords,min=-600*64, max=600*64)
+    print("returned coords are: ", returnedcoords)
+    return returnedcoords
+a = jnp.array([5, 5])
+b = jnp.array([10,10])
+print(myfunc(a,b))
+
+
+#print("4 % -4 =: ", 4 % 3)
 
 #def printtest(x):
 #    test = jnp.array((random.randint(1,10)*100,random.randint(1,10)*100))

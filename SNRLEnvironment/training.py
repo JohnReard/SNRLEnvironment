@@ -26,7 +26,7 @@ windowheight = 600
 # env limits must be >= than window size
 envnum = 2
 limits = (windowwidth*64,windowheight*64) 
-environments = EnvCollection(envstates=jnp.array([initialstate,initialstate]), envlimits=jnp.vstack([limits,limits]), velocitylimits=jnp.array([2,2]))
+environments = EnvCollection(envstates=jnp.array([initialstate,initialstate]), envlimits=jnp.vstack([limits,limits]), coordlimits=jnp.array([2,2]))
 #vmap the construction of the environments?
 
 print("Environments are: ", environments)
@@ -57,7 +57,7 @@ while running:
     newstates = jax.vmap(statestep)(currentstates,actions)
     currentstates = jnp.array(newstates)
     print("drawn states: ", currentstates[0][0],currentstates[0][1])
-    
+
     window = drawframe(currentstates[0][0],currentstates[0][1], window, i)
     i+=1
     #image = ax.imshow(window,animated=True)

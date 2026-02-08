@@ -18,7 +18,7 @@ def showplt(window):
     plt.imshow(window)
     plt.show()
 
-def drawframe(goalcoord, agentcoord, window,i):
+def drawframe(goalcoord, agentcoord, window):
     #draw agent
     agent_radius = 7.0
     agent_colour = jnp.array([0.1,0.1,0.8])
@@ -27,7 +27,7 @@ def drawframe(goalcoord, agentcoord, window,i):
     ay = int(agentcoord[1])
     window = tc.draw_circle(ax,ay,agent_radius,agent_colour,window)
     #draw goal
-    goal_radius = 10.0 + i
+    goal_radius = 10.0
     goal_colour = jnp.array([0.1,0.8,0.2])
     window = tc.draw_circle(goalcoord[0],goalcoord[1],goal_radius,goal_colour,window)
     if([goalcoord[0],goalcoord[1]]==[agentcoord[0],agentcoord[1]]):

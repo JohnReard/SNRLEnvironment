@@ -5,12 +5,15 @@ import jax.numpy as jnp
 import random
 import matplotlib.pyplot as plt
 import matplotlib.animation as anim
+
+seed = 1001
+key = jax.random.key(seed)
+
 initialstate = jnp.array([[500,300],[400,300]]) #try state as a dataclass, then as just a jnp.array
-#print(initialstate)
 agent = Agent(initialstate)
 #input should be policyinput = jnp.array([env.currentstate.agentpos[0],env.currentstate.agentpos[1], env.goalpos[0], env.goalpos[1]])
 def agentact(input):
-    output = jnp.array((random.randint(1,10)*100,random.randint(1,10)*100))
+    output = jnp.array((random.randint(-10,10),random.randint(-10,10)))
     #actionval = agent.apply(input)
     test = agent.policy.test()
     #actionval = agent(input)
@@ -48,7 +51,7 @@ while running:
     
    
 
-    agentact = jax.vmap(pureact,(envnum))
+    agentact = jax.vmap(pureact,(envnum))#define the agentact func as applying pureact to the num of environments in a parallel way
     actions = agentact(jnp.array([currentstates]))
     
     #print("\nactions:", actions,"\ncurrentstates: ", currentstates)
@@ -58,7 +61,7 @@ while running:
     currentstates = jnp.array(newstates)
     print("drawn states: ", currentstates[0][0],currentstates[0][1])
 
-    window = drawframe(currentstates[0][0],currentstates[0][1], window, i)
+    window = drawframe(currentstates[0][0],currentstates[0][1], window)
     i+=1
     #image = ax.imshow(window,animated=True)
     #axis = plt.axes(limits)

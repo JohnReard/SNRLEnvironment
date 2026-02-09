@@ -5,6 +5,10 @@ import matplotlib.pyplot as plt
 
 devicecount = jax.device_count()
 devices = jax.devices()
+
+seed = 1001
+key = jax.random.key(seed)
+
 i=0
 print(devices)
 def myfunc(arr1, arr2):
@@ -16,8 +20,12 @@ def myfunc(arr1, arr2):
     return returnedcoords
 a = jnp.array([5, 5])
 b = jnp.array([10,10])
-print(myfunc(a,b))
+#print(myfunc(a,b))
 
+for i in range(10):
+    key,subkey = jax.random.split(key)
+    output = jax.random.randint(subkey, shape=(2,), minval=-10, maxval=10)
+    print("output is: ", output)
 
 #print("4 % -4 =: ", 4 % 3)
 

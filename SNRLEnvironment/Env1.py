@@ -66,7 +66,7 @@ def statestep(envstate,currentaction):
     return newstate
 def addvelocity(a,b):#might not be vectorisable because might not be a pure function?
         addedcoords = jax.vmap(lambda x, y : x + y)(a, b)
-        newcoords = jnp.clip(addedcoords,min=-600*64, max=600*64) #Clips x and y coords to -limits and limits #LIMITS ARE HARDCODED, CHANGE IN FUTURE
+        newcoords = jnp.clip(addedcoords,min=-600, max=600) #Clips x and y coords to -limits and limits #LIMITS ARE HARDCODED, CHANGE IN FUTURE
         return newcoords
 @jax.tree_util.register_dataclass
 @dataclasses.dataclass

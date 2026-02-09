@@ -5,8 +5,8 @@ FEATURES TO IMPLEMENT:
 In training.py:
 
 NOW:
+- Bug with agent being drawn twice.
 
-- Need to check if agent's state is beyond limits before updating the state.
 FUTURE:
 - Need to pass input to policy and pass output from policy in agentact func. (output needs to be returned in agentneuralnetwork.py beforehand)
 

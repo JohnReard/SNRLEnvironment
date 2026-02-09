@@ -6,17 +6,21 @@ import random
 import matplotlib.pyplot as plt
 import matplotlib.animation as anim
 
-seed = 1001
-key = jax.random.key(seed)
+seed = 1591
+key = jax.random.key(seed) #creates key for subkeys to be made from
 
 initialstate = jnp.array([[500,300],[400,300]]) #try state as a dataclass, then as just a jnp.array
 agent = Agent(initialstate)
 #input should be policyinput = jnp.array([env.currentstate.agentpos[0],env.currentstate.agentpos[1], env.goalpos[0], env.goalpos[1]])
-def agentact(input):
-    output = jnp.array((random.randint(-10,10),random.randint(-10,10)))
+def agentact(input, key, subkey):
+    #output = jnp.array((random.randint(-10,10),random.randint(-10,10)))
+
+    
+    output = jnp.array(jax.random.randint(subkey, shape=(2,), minval=-10, maxval=10))
     #actionval = agent.apply(input)
     test = agent.policy.test()
     #actionval = agent(input)
+    del key
     return output #random action
 
 
@@ -50,18 +54,18 @@ while running:
     #currentstates structure: [ [ [goalx,goaly],[agentx,agenty] ] , [...] , ... ]
     
    
-
-    agentact = jax.vmap(pureact,(envnum))#define the agentact func as applying pureact to the num of environments in a parallel way
-    actions = agentact(jnp.array([currentstates]))
-    
+    key, subkey = jax.random.split(key)
+    agentact = jax.vmap(pureact,in_axes=(envnum,None, None)) #define the agentact func as applying pureact to the num of environments in a parallel way
+    actions = agentact(jnp.array([currentstates]), key, subkey) #apply the agentact function to the current states of all environments in parallel, output is a jnp array of shape (envnum, 2) where each row is the action for that environment
+    print("actions are: ", actions)
     #print("\nactions:", actions,"\ncurrentstates: ", currentstates)
     #actionset.append(currentstates)
 
     newstates = jax.vmap(statestep)(currentstates,actions)
     currentstates = jnp.array(newstates)
     print("drawn states: ", currentstates[0][0],currentstates[0][1])
-
-    window = drawframe(currentstates[0][0],currentstates[0][1], window)
+    env1states = currentstates[0]
+    window = drawframe(env1states, window)
     i+=1
     #image = ax.imshow(window,animated=True)
     #axis = plt.axes(limits)
@@ -75,7 +79,7 @@ while running:
         #print("agenvelocitylist:", env.agenvelocitylist)
         #print("agentposlist from agent:", agent.agentposlist)
         #print("actionset:", actionset)
-        
+        print("currentstates shape: ", currentstates)
         ani = anim.ArtistAnimation(fig, animationframes, interval=2, repeat_delay=1000)
         #animation = anim.FuncAnimation(fig, update,fargs=(animationframes,0), interval = 50, repeat_delay=1000)
         plt.show()

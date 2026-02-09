@@ -22,6 +22,8 @@ NOW:
 
 - Need to construct Block, Model classes.
 - Need to research how to implement layers etc in nnx.
+- Need to reimplement random in jax.random rather than PNRG (not GPU compatible and I think deprecated?)
+
 
 FUTURE:
 - Need to pass output from input in policy.

@@ -29,7 +29,7 @@ class AgentNeuralNetwork(nnx.Module):
 
 #CREATE A BLOCK AND MODEL CLASS
     
-key = jax.random.PRNGKey(0) 
+#key = jax.random.PRNGKey(0) PRNG key does not work on GPU, maybe try jax.random instead?
 initinput = jnp.ones((1,4)) #nonce input for policy to be initialised.
 ann = AgentNeuralNetwork(rngs = nnx.Rngs(0)) #seed neural net with rng
 #params = ann.init(key, initinput)

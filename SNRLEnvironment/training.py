@@ -4,6 +4,7 @@ import jax
 import jax.numpy as jnp
 import random
 import matplotlib.pyplot as plt
+import matplotlib
 import matplotlib.animation as anim
 
 seed = 1591

@@ -1,7 +1,9 @@
 import tensorcanvas as tc
+import matplotlib
 import matplotlib.pyplot as plt
 import jax.numpy as jnp
 import matplotlib.animation as animation
+
 
 
 def drawwindow(height, width):

@@ -7,11 +7,12 @@ import matplotlib.pyplot as plt
 import matplotlib
 import matplotlib.animation as anim
 
-seed = 1591
+seed = 1491
 key = jax.random.key(seed) #creates key for subkeys to be made from
 
-initialstate = jnp.array([[500,300],[400,300]]) #try state as a dataclass, then as just a jnp.array
-agent = Agent(initialstate)
+initialstate1 = jnp.array([[500,300],[400,300]]) #try state as a dataclass, then as just a jnp.array
+initialstate2 = jnp.array([[100,200],[300,400]])
+agent = Agent(initialstate1)
 #input should be policyinput = jnp.array([env.currentstate.agentpos[0],env.currentstate.agentpos[1], env.goalpos[0], env.goalpos[1]])
 def agentact(input, key, subkey):
     #output = jnp.array((random.randint(-10,10),random.randint(-10,10)))
@@ -34,7 +35,7 @@ windowheight = 600
 # env limits must be >= than window size
 envnum = 2
 limits = (windowwidth*64,windowheight*64) 
-environments = EnvCollection(envstates=jnp.array([initialstate,initialstate]), envlimits=jnp.vstack([limits,limits]), coordlimits=jnp.array([2,2]))
+environments = EnvCollection(envstates=jnp.array([initialstate1,initialstate2]), envlimits=jnp.vstack([limits,limits]), coordlimits=jnp.array([2,2]))
 #vmap the construction of the environments?
 
 print("Environments are: ", environments)
@@ -43,7 +44,6 @@ i=0
 actionset = []
 
 currentstates = environments.envstates # this is [[goalstate1 agentstate1],[goalstate2, agentstate2]]
-print("Before training currenstate values: ", currentstates)
 #window = drawwindow(windowwidth,windowheight)
 #window2 = drawwindow(windowwidth,windowheight)
 animationframes = []
@@ -61,11 +61,7 @@ while running:
     #print("actions are: ", actions)
     #print("\nactions:", actions,"\ncurrentstates: ", currentstates)
     #actionset.append(currentstates)
-    print("current states before step are: ", currentstates)
-    print("action added is: ", actions[0],"state added to action is: ", currentstates)
     newstates, newcoords = jax.vmap(statestep)(currentstates,actions)#PROBLEM IS HERE
-    print("new states after are: ", newstates)
-    print("new coords were: ", newcoords)
     currentstates = jnp.array(newstates)
     #print("newstates after newstate assignment: ", states)
     #print("drawn states: ", currentstates[0][0],currentstates[0][1])
@@ -79,7 +75,7 @@ while running:
 
     #drawframe(env2,agent, window2)
     i+=1
-    if i > 10:
+    if i > 100:
         #print("agentposlist:", env.agentposlist)
         #print("agenvelocitylist:", env.agenvelocitylist)
         #print("agentposlist from agent:", agent.agentposlist)

@@ -5,13 +5,15 @@ FEATURES TO IMPLEMENT:
 In training.py:
 
 NOW:
-
+- Draw the window over the previous goal and agent locations.
 
 FUTURE:
 - Need to pass input to policy and pass output from policy in agentact func. (output needs to be returned in agentneuralnetwork.py beforehand)
 
 
 In Env1.py:
+
+FUTURE:
 
 - Limits are currently hardcoded into addvelocity, change this in future so the limits can be set universally.
 
@@ -27,3 +29,13 @@ NOW:
 
 FUTURE:
 - Need to pass output from input in policy.
+
+In renderer.py:
+
+NOW: 
+- Draw the previous path of the agent, DO NOT INCLUDE THIS PATH AS IMAGE PERCEPT/INPUT.
+
+Misc:
+
+FUTURE:
+- Need to allow input to be the image of the environment, i.e the array of all pixels.

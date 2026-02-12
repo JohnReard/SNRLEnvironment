@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import dataclasses
 import jax
+from jax import make_jaxpr
 import agentneuralnetwork
 import random
 import jax.numpy as jnp
@@ -19,7 +20,6 @@ class Action:
     cost : float
     #consider making this into a jnp.array for vectorisation?
     def __init__(self, velocityx, velocityy):
-        print("Action velocity:",velocityx,velocityy)
         #velocity = int(velocity)
         self.velocity = jnp.array([velocityx,velocityy])
         self.angle = 0
@@ -53,17 +53,21 @@ class Agent:
     @jax.jit
     def assigncost():
         pass
-
+@jax.jit
 def statestep(envstate,currentaction):
     #self.agent.observe(self.currentstate)
     #currentaction = env.agent.act(env)
-    newcoords = addvelocity(envstate[1], currentaction) #envstate[1] is the agent velocity
-    newstate = [envstate[0],newcoords]
+    #newcoords = addvelocity(envstate[1], currentaction) #envstate[1] is the agent velocity [500, 300] + [actionx, actiony]
+    addedcoords = jax.vmap(lambda x, y : x + y)(envstate[1], currentaction)# add agent transformation (action) to agent pos
+    newcoords = jnp.clip(addedcoords,min=-600, max=600) #make sure the new agent pos isn't outside of env limits
+    newstate = jnp.array([envstate[0],newcoords])
+    #might have to concatenate the agent state to goal state in another vmapped function 
     #if envstate[1][0] == envstate[0][0]:
     #    #env.goalreached()
     #    return newstate
     #else:
-    return newstate
+    return newstate, newcoords
+@jax.jit
 def addvelocity(a,b):#might not be vectorisable because might not be a pure function?
         addedcoords = jax.vmap(lambda x, y : x + y)(a, b)
         newcoords = jnp.clip(addedcoords,min=-600, max=600) #Clips x and y coords to -limits and limits #LIMITS ARE HARDCODED, CHANGE IN FUTURE

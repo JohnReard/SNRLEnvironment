@@ -11,22 +11,15 @@ key = jax.random.key(seed)
 
 i=0
 print(devices)
-def myfunc(arr1, arr2):
-    print("arr1 and arr2 = :", arr1.shape, " ", arr2.shape)
-    newcoords = jax.vmap(lambda x, y : x + y)(arr1, arr2) #vmap arguments must be jnp types or arrays of jnp types (i.e pytrees with leaves of jnp types)
-    print("newcoords are: ", newcoords)
-    returnedcoords = jnp.clip(newcoords,min=-600*64, max=600*64)
-    print("returned coords are: ", returnedcoords)
-    return returnedcoords
+arr1 = jnp.array([1, 2])
+arr2 = jnp.array([3, 4])
 a = jnp.array([5, 5])
 b = jnp.array([10,10])
 #print(myfunc(a,b))
-
-for i in range(10):
-    key,subkey = jax.random.split(key)
-    output = jax.random.randint(subkey, shape=(2,), minval=-10, maxval=10)
-    print("output is: ", output)
-
+addedcoords = jax.vmap(lambda x, y : x + y)(arr1, arr2)
+print(addedcoords)
+addedcoords = jnp.clip(addedcoords,min=0, max=2)
+print(addedcoords)
 #print("4 % -4 =: ", 4 % 3)
 
 #def printtest(x):

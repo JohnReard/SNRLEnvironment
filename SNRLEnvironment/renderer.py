@@ -11,9 +11,7 @@ def drawwindow(height, width):
     return window
 
 def showplt(window):
-    print("window shape: ", window.shape)
     #window = jnp.permute_dims(window, (1,0,2))#changes dimensions of array to valid dims for show()
-    print("window type: ", type(window))
     #plt.plot(window)
     window = jnp.array(window)
     print(window)
@@ -27,10 +25,8 @@ def drawframe(state, window):
     agent_radius = 7.0
     agent_colour = jnp.array([0.1,0.1,0.8])
     #polar coordinates??
-    print("agentcoord: ", agentcoord)
     ax = int(agentcoord[0])
     ay = int(agentcoord[1])
-    print("agent ax and ay: ", ax, " ", ay)
     window = tc.draw_circle(ax,ay,agent_radius,agent_colour,window)
 
     #draw goal

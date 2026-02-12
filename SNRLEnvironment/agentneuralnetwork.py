@@ -14,7 +14,7 @@ class AgentNeuralNetwork(nnx.Module):
         x = self.linear2(x)
         return x
     def test(self):
-        print(42)
+        pass
         
     #def __call__(self, x):
     #    self.hiddenlayers : int

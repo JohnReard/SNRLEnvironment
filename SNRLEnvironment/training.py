@@ -42,8 +42,8 @@ running = True
 i=0
 actionset = []
 
-currentstates = environments.envstates
-
+currentstates = environments.envstates # this is [[goalstate1 agentstate1],[goalstate2, agentstate2]]
+print("Before training currenstate values: ", currentstates)
 #window = drawwindow(windowwidth,windowheight)
 #window2 = drawwindow(windowwidth,windowheight)
 animationframes = []
@@ -58,16 +58,20 @@ while running:
     key, subkey = jax.random.split(key)
     agentact = jax.vmap(pureact,in_axes=(envnum,None, None)) #define the agentact func as applying pureact to the num of environments in a parallel way
     actions = agentact(jnp.array([currentstates]), key, subkey) #apply the agentact function to the current states of all environments in parallel, output is a jnp array of shape (envnum, 2) where each row is the action for that environment
-    print("actions are: ", actions)
+    #print("actions are: ", actions)
     #print("\nactions:", actions,"\ncurrentstates: ", currentstates)
     #actionset.append(currentstates)
-
-    newstates = jax.vmap(statestep)(currentstates,actions)
+    print("current states before step are: ", currentstates)
+    print("action added is: ", actions[0],"state added to action is: ", currentstates)
+    newstates, newcoords = jax.vmap(statestep)(currentstates,actions)#PROBLEM IS HERE
+    print("new states after are: ", newstates)
+    print("new coords were: ", newcoords)
     currentstates = jnp.array(newstates)
-    print("drawn states: ", currentstates[0][0],currentstates[0][1])
+    #print("newstates after newstate assignment: ", states)
+    #print("drawn states: ", currentstates[0][0],currentstates[0][1])
     env1states = currentstates[0]
+    #print("env1states: ", env1states)
     window = drawframe(env1states, window)
-    i+=1
     #image = ax.imshow(window,animated=True)
     #axis = plt.axes(limits)
     frame = plt.imshow(window, animated=True)
@@ -75,12 +79,12 @@ while running:
 
     #drawframe(env2,agent, window2)
     i+=1
-    if i > 200:
+    if i > 10:
         #print("agentposlist:", env.agentposlist)
         #print("agenvelocitylist:", env.agenvelocitylist)
         #print("agentposlist from agent:", agent.agentposlist)
         #print("actionset:", actionset)
-        print("currentstates shape: ", currentstates)
+        #print("currentstates shape: ", currentstates)
         ani = anim.ArtistAnimation(fig, animationframes, interval=2, repeat_delay=1000)
         #animation = anim.FuncAnimation(fig, update,fargs=(animationframes,0), interval = 50, repeat_delay=1000)
         plt.show()

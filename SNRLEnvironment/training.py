@@ -63,15 +63,11 @@ while running:
     #actionset.append(currentstates)
     newstates, newcoords = jax.vmap(statestep)(currentstates,actions)#PROBLEM IS HERE
     currentstates = jnp.array(newstates)
-    #print("newstates after newstate assignment: ", states)
-    #print("drawn states: ", currentstates[0][0],currentstates[0][1])
     env1states = currentstates[0]
-    #print("env1states: ", env1states)
-    window = drawframe(env1states, window)
-    #image = ax.imshow(window,animated=True)
-    #axis = plt.axes(limits)
-    frame = plt.imshow(window, animated=True)
-    animationframes.append([frame])
+    #to keep image of previous locations set frame = to window =.
+    frame = drawframe(env1states, window)
+    image = plt.imshow(frame, animated=True)
+    animationframes.append([image])
 
     #drawframe(env2,agent, window2)
     i+=1

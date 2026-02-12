@@ -5,7 +5,9 @@ FEATURES TO IMPLEMENT:
 In training.py:
 
 NOW:
-- Draw the window over the previous goal and agent locations.
+- Create batching for environments, e.g put in a number and have that number of environments engage in training runs.
+
+
 
 FUTURE:
 - Need to pass input to policy and pass output from policy in agentact func. (output needs to be returned in agentneuralnetwork.py beforehand)

@@ -66,7 +66,7 @@ def statestep(envstate,currentaction):
     #    #env.goalreached()
     #    return newstate
     #else:
-    return newstate, newcoords
+    return newstate
 @jax.jit
 def addvelocity(a,b):#might not be vectorisable because might not be a pure function?
         addedcoords = jax.vmap(lambda x, y : x + y)(a, b)

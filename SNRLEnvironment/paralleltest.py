@@ -20,16 +20,7 @@ addedcoords = jax.vmap(lambda x, y : x + y)(arr1, arr2)
 print(addedcoords)
 addedcoords = jnp.clip(addedcoords,min=0, max=2)
 print(addedcoords)
-#print("4 % -4 =: ", 4 % 3)
-
-#def printtest(x):
-#    test = jnp.array((random.randint(1,10)*100,random.randint(1,10)*100))
-#    return test
-#while i < 10:
-#    testarray = jax.vmap(printtest)(jnp.array([1, 2]))
-#    print("testarray: ", testarray)
-#    i+=1
-#    plt.plot(testarray[:,0], testarray[:,1], 'o')
-#    plt.show()
+#Something to test:
+# if you add a 2 deep nested array to another and vmap x+y does that vectorised the 1 deep addition as well?
 
 

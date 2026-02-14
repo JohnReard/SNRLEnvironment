@@ -1,6 +1,15 @@
 "# SNRLEnvironment" 
+CHANGELOG:
+- Created unittests.py.
+- Stopped returning newcoords in statestep.
+
+
 
 FEATURES TO IMPLEMENT:
+
+In unittest.py:
+NOW:
+- Create Unit test 1.1, 1.2 and 1.3 (refer to test document).
 
 In training.py:
 

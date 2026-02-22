@@ -1,8 +1,8 @@
 "# SNRLEnvironment" 
 CHANGELOG:
-- Created unittests.py.
-- Implemented unit test 1.1
-- Stopped returning newcoords in statestep.
+- limits are no longer hardcoded, are passed into statestep function.
+- coords are now clipped to a minimum of 0 rather than -600.
+- unit test 1.2 is now implemented.
 
 
 
@@ -10,7 +10,7 @@ FEATURES TO IMPLEMENT:
 
 In unittest.py:
 NOW:
-- Create Unit test 1.2 and 1.3 (refer to test document).
+- implement unit tests up to 1.5
 
 In training.py:
 
@@ -27,7 +27,7 @@ In Env1.py:
 
 FUTURE:
 
-- Limits are currently hardcoded into addvelocity, change this in future so the limits can be set universally.
+- When limits are clipped they are assumed to be equal (i.e only the y limit is clipped from), make sure both x and y are clipped from.
 
 
 In agentneuralnetwork.py:

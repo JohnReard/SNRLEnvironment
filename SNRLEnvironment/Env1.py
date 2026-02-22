@@ -54,12 +54,12 @@ class Agent:
     def assigncost():
         pass
 @jax.jit
-def statestep(envstate,currentaction):
+def statestep(envstate,currentaction,limits):#limits is a tuple
     #self.agent.observe(self.currentstate)
     #currentaction = env.agent.act(env)
     #newcoords = addvelocity(envstate[1], currentaction) #envstate[1] is the agent velocity [500, 300] + [actionx, actiony]
     addedcoords = jax.vmap(lambda x, y : x + y)(envstate[1], currentaction)# add agent transformation (action) to agent pos
-    newcoords = jnp.clip(addedcoords,min=-600, max=600) #make sure the new agent pos isn't outside of env limits
+    newcoords = jnp.clip(addedcoords,min=0, max=limits.at[1].get()) #make sure the new agent pos isn't outside of env limits assuming x = y for limits
     newstate = jnp.array([envstate[0],newcoords])
     #might have to concatenate the agent state to goal state in another vmapped function 
     #if envstate[1][0] == envstate[0][0]:

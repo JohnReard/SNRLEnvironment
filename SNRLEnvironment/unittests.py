@@ -10,11 +10,12 @@ class AgentTests(unittest.TestCase):
         #make agent move Do i need to call the functions or can i just take the variables straight from the training.py file?
         self.envnum = 2 #test if at minimum feature works for 2 environments
         prestates = jnp.array([[[200,200],[300,300]],[[400,400],[500,500]]]) #test state for 2 environments
-        
+        self.limits = jnp.array([600,600])
+
         #call functions
         agentact = jax.vmap(pureact,in_axes=(self.envnum,None, None))
         self.actions = agentact(jnp.array([prestates]), key, subkey)
-        poststates = jax.vmap(statestep)(prestates,self.actions)
+        poststates = jax.vmap(statestep, in_axes=(0,0,None))(prestates,self.actions, self.limits)
 
         #extract agent states 
         preagentstate_env1 = prestates[0][1]
@@ -53,6 +54,23 @@ class AgentTests(unittest.TestCase):
             #test goal pos has not changed
             self.assertTrue(jnp.array_equal(self.pregoalstates[i], self.postgoalstates[i]))
             i += 1
+
+        self.tearDown()
+    def test_limits(self):
+        #arange
+        self.setUp()
+
+        xlimit = jnp.array(self.limits.at[0].get())
+        ylimit = jnp.array(self.limits.at[1].get())
+        agentstates = jnp.array(self.postagentstates)
+        goalstates = jnp.array(self.postgoalstates)
+        #assert that states are within limits
+        #check agent and goal aren't beyond the x
+        self.assertFalse(jnp.any(jnp.greater(agentstates, xlimit)))
+        self.assertFalse(jnp.any(jnp.greater(goalstates, xlimit)))
+        #check agent and goal aren't beyond the y
+        self.assertFalse(jnp.any(jnp.greater(agentstates, ylimit)))
+        self.assertFalse(jnp.any(jnp.greater(goalstates, ylimit)))
 
         self.tearDown()
 if __name__ == '__main__':

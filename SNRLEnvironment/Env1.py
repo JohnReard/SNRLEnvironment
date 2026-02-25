@@ -75,7 +75,7 @@ def addvelocity(a,b):#might not be vectorisable because might not be a pure func
 @jax.tree_util.register_dataclass
 @dataclasses.dataclass
 class EnvCollection:
-    envlimits : jnp.array #jnp.array of arrays
+    #envlimits : jnp.array #jnp.array of arrays
     envstates : jnp.array #jnp.array of arrays
-    coordlimits : jnp.array #jnp.array of ints
+    #coordlimits : jnp.array #jnp.array of ints
 

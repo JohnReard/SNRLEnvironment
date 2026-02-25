@@ -1,18 +1,25 @@
 import jax
 import jax.numpy as jnp
 
-seed = 1002
+seed = 1000
 key = jax.random.key(seed)
+seed = 2000
 
-
-def create_env(envinits, key):
-    key, subkey = jax.random.split(key)
-    subkey1, subkey2 = jax.random.split(subkey)
-    subkey1 = jnp.clip(int(subkey1), min= 0, max= 600)
-    subkey2 = jnp.clip(int(subkey2), min= 0, max= 600)
-    return jnp.array([jnp.array(jnp.array([subkey1]),jnp.array([subkey2]))])
+@jax.jit #this calls envnum times
+def create_env(randint):
+    state = jnp.clip(randint*100,min=0, max=600)
+    returnedstate = jnp.array(state)
+    return returnedstate
+@jax.jit
+def return_states(randints):
+    envbatch = jax.vmap(create_env)(randints)
+    return envbatch
+#this calls once, can't be jitted because arrays need static shape
 def create_envbatch(key, envnum):
-    envinits = jnp.zeros(envnum)
-    envbatch = jax.vmap(create_env, out_axes=envnum, in_axes=(None,None))(envinits,key)
-    print(envbatch)
-create_envbatch(key, 5)
+    #find a way to do this for an indeterminate number of objects?
+    goalrandints = jax.random.normal(key, shape=(envnum,2))
+    subkey, key = jax.random.split(key)
+    agentrandints = jax.random.normal(key, shape=(envnum,2))
+    goalstates = return_states(goalrandints)# [n*[x,y] ]
+    agentstates = return_states(agentrandints)# [n*[x,y] ]
+    return jnp.reshape(jnp.array([goalstates,agentstates]),(envnum,2,2))

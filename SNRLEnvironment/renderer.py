@@ -14,7 +14,6 @@ def showplt(window):
     #window = jnp.permute_dims(window, (1,0,2))#changes dimensions of array to valid dims for show()
     #plt.plot(window)
     window = jnp.array(window)
-    print(window)
     plt.imshow(window)
     plt.show()
 

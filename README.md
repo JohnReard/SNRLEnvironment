@@ -1,8 +1,8 @@
 "# SNRLEnvironment" 
 CHANGELOG:
-- limits are no longer hardcoded, are passed into statestep function.
-- coords are now clipped to a minimum of 0 rather than -600.
-- unit test 1.2 is now implemented.
+- environments now created by batching.py.
+- batching implemented for custom environment size
+- unittests 1.1, 1.12 updated for batching
 
 
 
@@ -11,11 +11,12 @@ FEATURES TO IMPLEMENT:
 In unittest.py:
 NOW:
 - implement unit tests up to 1.5
+- new unit test for length of environments?
 
 In training.py:
 
 NOW:
-- Create batching for environments, e.g put in a number and have that number of environments engage in training runs.
+- Images need to be drawn for all environments, drawframe needs to be jitted for this.
 
 
 
@@ -28,6 +29,7 @@ In Env1.py:
 FUTURE:
 
 - When limits are clipped they are assumed to be equal (i.e only the y limit is clipped from), make sure both x and y are clipped from.
+- When more object states are added to the environment statestep will have to find a way to get the agentstate no matter what the size of the array is.
 
 
 In agentneuralnetwork.py:

@@ -1,5 +1,6 @@
 from Env1 import EnvCollection, State, Agent, Action, statestep, addvelocity
 from renderer import drawframe, drawwindow, showplt, update
+from batching import create_envbatch
 import jax
 import jax.numpy as jnp
 import random
@@ -7,13 +8,16 @@ import matplotlib.pyplot as plt
 import matplotlib
 import matplotlib.animation as anim
 
-seed = 1491
+seed = 1486
 key = jax.random.key(seed) #creates key for subkeys to be made from
+envnum = 4000000 #number of environments
 
 initialstate1 = jnp.array([[500,300],[400,300]]) #try state as a dataclass, then as just a jnp.array
 initialstate2 = jnp.array([[100,200],[300,400]])
-agent = Agent(initialstate1)
 
+
+envstates = create_envbatch(key, envnum)
+agent = Agent(envstates[0])
 def agentact(input, key, subkey):
     #output = jnp.array((random.randint(-10,10),random.randint(-10,10)))
     output = jnp.array(jax.random.randint(subkey, shape=(2,), minval=-10, maxval=10))
@@ -29,12 +33,12 @@ pureact = jax.jit(agentact)
 windowwidth = 600
 windowheight = 600
 # env limits must be >= than window size
-envnum = 2
-limits = jnp.array([-600,600]) 
-environments = EnvCollection(envstates=jnp.array([initialstate1,initialstate2]), envlimits=jnp.vstack([limits,limits]), coordlimits=jnp.array([2,2]))
+limits = jnp.array([0,600]) 
+#environments = EnvCollection(envstates=envstates)
 #vmap the construction of the environments?
 
-currentstates = environments.envstates
+currentstates = envstates
+print(currentstates)
 frames = []
 window = drawwindow(windowheight,windowwidth)
 fig = plt.figure()
@@ -43,10 +47,13 @@ while i < 100:
     #retrieve random key
     key, subkey = jax.random.split(key)
     #agents act on environments
-    agentact = jax.vmap(pureact,in_axes=(envnum,None, None)) #define the agentact func as applying pureact to the num of environments in a parallel way
-    actions = agentact(jnp.array([currentstates]), key, subkey) #apply the agentact function to the current states of all environments in parallel, output is a jnp array of shape (envnum, 2) where each row is the action for that environment
-    #step through states
+    agentact = jax.vmap(pureact,in_axes=(0,None, None)) #define the agentact func as applying pureact to the num of environments in a parallel way
+    print("currentstates is: ",jnp.shape(currentstates))
+    actions = agentact(currentstates, key, subkey) #apply the agentact function to the current states of all environments in parallel, output is a jnp array of shape (envnum, 2) where each row is the action for that environment
+    #step through states, note currentstates[1] is the agent states and currentstates[0] is the goal states
+    #print("dims are: ", jnp.shape(currentstates[0]), jnp.shape(currentstates[1]))
     newstates = jax.vmap(statestep,in_axes=(0,0,None))(currentstates,actions,limits) #apply the agent's transformations to the states
+    print("dims after: ", jnp.shape(newstates))
     currentstates = jnp.array(newstates)
     #extract first env state for image
     env1states = currentstates[0]

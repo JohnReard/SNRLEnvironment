@@ -12,8 +12,6 @@ seed = 1486
 key = jax.random.key(seed) #creates key for subkeys to be made from
 envnum = 4000000 #number of environments
 
-initialstate1 = jnp.array([[500,300],[400,300]]) #try state as a dataclass, then as just a jnp.array
-initialstate2 = jnp.array([[100,200],[300,400]])
 
 
 envstates = create_envbatch(key, envnum)

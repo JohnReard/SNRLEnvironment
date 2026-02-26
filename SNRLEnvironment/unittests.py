@@ -12,6 +12,7 @@ class AgentTests(unittest.TestCase):
     def setUp(self):
         #in future when more objects are included in the environment agentindex will be dynamically assigned
         self.agentindex = 1
+        self.objnum = 2
         seed = 1901
         key = jax.random.key(seed)
         #make agent move Do i need to call the functions or can i just take the variables straight from the training.py file?
@@ -22,18 +23,14 @@ class AgentTests(unittest.TestCase):
         #get agentstates
         self.preagentstates = jax.vmap(lambda x : x[self.agentindex])(self.prestates)
 
-
         #call functions, statestep works when there are multiple actions
         agentact = jax.vmap(pureact,in_axes=(0,None, None))
         self.actions = agentact(self.prestates, key, subkey)
         self.poststates = jax.vmap(statestep, in_axes=(0,0,None))(self.prestates,self.actions, self.limits)
         
         #calculate what post states should be, works when there is one action
-        print("prestates is : ", self.prestates)
-        print("actions are: ", self.actions)
         self.agentstates_expected = jax.vmap(lambda x, y : x + y,in_axes=(0,0))(self.preagentstates,self.actions)
         self.agentstates_expected=jnp.clip(self.agentstates_expected,min=0,max=self.limits[0]) #needs to be updated if limits aren't equal
-        print("agentstates expec is :", self.agentstates_expected)
 
     def test_action_effect(self):
         #arrange
@@ -42,8 +39,6 @@ class AgentTests(unittest.TestCase):
         i = 0
         while i < self.envnum:
             #test agent pos has changed by amount of action
-            print("expec: ", self.agentstates_expected[i])
-            print(" actual: ", self.poststates[i])
             self.assertTrue(jnp.array_equal(self.agentstates_expected[i],self.poststates[i][self.agentindex]))
             #test agent has moved correct amount?
 
@@ -69,5 +64,16 @@ class AgentTests(unittest.TestCase):
         self.assertFalse(jnp.any(jnp.greater(goalstates, ylimit)))
 
         self.tearDown()
+    def test_statedims(self):
+        self.setUp()
+        self.assertEqual(jnp.shape(self.prestates),(self.envnum, self.objnum,2))
+        self.assertEqual(jnp.shape(self.poststates),jnp.shape(self.prestates))
+
+        self.tearDown()
+    def test_initstates(self):
+        self.setUp()
+
+        self.tearDown()
+
 if __name__ == '__main__':
     unittest.main()

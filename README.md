@@ -1,10 +1,8 @@
 "# SNRLEnvironment" 
 CHANGELOG:
-- created neural network for policy.
-- created loss function and optimiser for policy.
-
-
-
+- parallelised statestep, and image creation.
+- loss function is calling.
+- agentact() is applying the model.
 
 
 FEATURES TO IMPLEMENT:

@@ -6,20 +6,25 @@ import jax.numpy as jnp
 class AgentNeuralNetwork(nnx.Module):
     #hiddenlayers : int
     #outputs : int
-    
-    def __init__(self,n_features : int = 64, n_hidden: int=100,n_targets: int=1,*, rngs : nnx.Rngs):#creates layers
+    #n_features will be 2*objnum in no img input, and (windowx * 2 + windowy * 2) * 3 in img
+    def __init__(self,n_features : int = 4, n_hidden: int=4,n_targets: int=2,*, rngs : nnx.Rngs):#creates layers
         self.n_features = n_features
         self.layer1 = nnx.Linear(n_features,n_hidden, rngs=rngs)   
         self.layer2 = nnx.Linear(n_features,n_hidden, rngs=rngs)
-        self.layer3 = nnx.Linear(n_features,n_hidden, rngs=rngs) 
+        self.layer3 = nnx.Linear(n_features,n_targets, rngs=rngs) 
         #optimiser adjusts parameters/weights(?) of model to minimise error returned by cost function  
     def __call__(self, x):
         #x is input
-        #flatten x??
+        print(jnp.shape(x))
+        #flatten x to make shape of input match shape of first layer (n_features)
+        #x = x.reshape(x.shape[0], self.n_features) #[[agentx agenty] , [goalx goaly]]
         #pass input to layers and add activation func
         x = self.layer1(nnx.selu(x))
+        print(jnp.shape(x))
         x = self.layer2(nnx.selu(x))
+        print(jnp.shape(x))
         x = self.layer3(x)
+        print(jnp.shape(x))
         return x
     def test(self):
         pass
@@ -38,18 +43,20 @@ class AgentNeuralNetwork(nnx.Module):
 #CREATE A BLOCK AND MODEL CLASS
     
 #key = jax.random.PRNGKey(0) PRNG key does not work on GPU, maybe try jax.random instead?
-initinput = jnp.ones((1,4)) #nonce input for policy to be initialised.
 ann = AgentNeuralNetwork(rngs = nnx.Rngs(0)) #seed neural net with rng
 optimizer = nnx.ModelAndOptimizer(ann, optax.sgd(learning_rate=0.05)) #uses stndrd gradient descent algo as optimiser
-def loss_fun(model : nnx.Module, data : jax.Array, goalpos : jax.Array):
+@nnx.jit
+def loss_fun(model : nnx.Module, data : jax.Array, idealstate : jax.Array):
     logits = model(data)#raw output is from applying model to data
-    loss = optax.squared_error(predictions =logits, targets=goalpos)
-    return loss, logits #returns loss and raw output
+    loss = optax.squared_error(predictions =logits, targets=idealstate)
+    loss = jnp.mean(loss)
+    return jnp.mean(loss), logits #returns loss and raw output
 @nnx.jit #why jit this and not other funcs???
-def train_step(model : nnx.Module, data : jax.Array, optimizer : nnx.Optimizer):
+def train_step(model : nnx.Module, data : jax.Array, optimizer : nnx.Optimizer, idealstate : jax.Array):
     loss_gradient = nnx.grad(loss_fun, has_aux=True)#gradient of loss returned by loss func
-    grads, logits = loss_gradient(model, data) #logits is the raw predictions
+    grads, logits = loss_gradient(model, data, idealstate) #logits is the raw predictions
     optimizer.update(grads)
+    return logits
 
 
 #params = ann.init(key, initinput)

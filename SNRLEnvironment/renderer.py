@@ -23,9 +23,11 @@ def drawframe(state, window):
     #draw agent
     agent_radius = 7.0
     agent_colour = jnp.array([0.1,0.1,0.8])
-    #polar coordinates??
-    ax = int(agentcoord[0])
-    ay = int(agentcoord[1])
+    #polar coordinates?
+    ax = agentcoord[0].astype(int)
+    ay = agentcoord[1].astype(int)
+    #ax = int(agentcoord[0])
+    #ay = int(agentcoord[1])
     window = tc.draw_circle(ax,ay,agent_radius,agent_colour,window)
 
     #draw goal

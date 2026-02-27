@@ -22,4 +22,5 @@ def create_envbatch(key, envnum):
     agentrandints = jax.random.normal(key, shape=(envnum,2))
     goalstates = return_states(goalrandints)# [n*[x,y] ]
     agentstates = return_states(agentrandints)# [n*[x,y] ]
-    return jnp.reshape(jnp.array([goalstates,agentstates]),(envnum,2,2))
+    #returns initialstates, idealstates (idealstates is the agent on the goal, used for loss func)
+    return jnp.reshape(jnp.array([goalstates,agentstates]),(envnum,2,2)), jnp.reshape(jnp.array([goalstates,goalstates]),(envnum,2,2))

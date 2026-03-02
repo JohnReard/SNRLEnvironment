@@ -23,4 +23,4 @@ def create_envbatch(key, envnum):
     goalstates = return_states(goalrandints)# [n*[x,y] ]
     agentstates = return_states(agentrandints)# [n*[x,y] ]
     #returns initialstates, idealstates (idealstates is the agent on the goal, used for loss func)
-    return jnp.reshape(jnp.array([goalstates,agentstates]),(envnum,2,2)), jnp.reshape(jnp.array([goalstates,goalstates]),(envnum,2,2))
+    return jnp.reshape(jnp.array([goalstates,agentstates]),(envnum,2,2 ))

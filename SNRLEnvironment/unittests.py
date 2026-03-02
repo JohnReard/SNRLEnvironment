@@ -3,7 +3,7 @@ import jax
 import jax.numpy as jnp
 import jax.random
 #import training, Env1
-from training import pureact, key, subkey
+from training import pureact, key
 from Env1 import statestep
 from batching import create_envbatch
 

@@ -2,11 +2,16 @@ import jax
 import jax.numpy as jnp
 
 a = jnp.array([0,1])
-b = jnp.array([[30,40],[10,20]])
-c = jnp.array(5)
+state1 = jnp.array([[30,40],
+                    [10,20]])
+state2 = jnp.array([[100,100],
+                    [200,200]])
+states = jnp.array([state1,state2])
+actions = jnp.array([[5,5],[5,5]])
 
+result = jax.vmap(lambda x, y: x + y, in_axes=(2,0))(states, actions)
 #when the in axes is specified you are specifying that that number axis or dimension is being iterated through, i.e:
-print(jax.vmap(lambda x, y : (x + y), in_axes=(0,0))(a,b))
+print(result)
 #is: | 30 , 40 |
 #    | 10 , 20 |   --> [ [30, 10] , [41, 21] ]
 #     ---------

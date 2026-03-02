@@ -1,8 +1,7 @@
 "# SNRLEnvironment" 
 CHANGELOG:
-- parallelised statestep, and image creation.
-- loss function is calling.
-- agentact() is applying the model.
+- agent's params now being changed based on grads.
+- nested episodes in training.py.
 
 
 FEATURES TO IMPLEMENT:
@@ -14,6 +13,7 @@ NOW:
 In training.py:
 
 NOW:
+- find a way to parallelise run_step() with train_step() inside it
 
 
 FUTURE:
@@ -26,6 +26,7 @@ FUTURE:
 In agentneuralnetwork.py:
 
 NOW:
+- find a way to parallelise training.
 
 
 FUTURE:

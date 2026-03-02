@@ -7,25 +7,25 @@ import random
 import matplotlib.pyplot as plt
 import matplotlib
 import matplotlib.animation as anim
-from agentneuralnetwork import loss_fun, train_step, optimizer
+from agentneuralnetwork import train_step, optimizer
 
-seed = 1486
-key = jax.random.key(seed) #creates key for subkeys to be made from
+#creates key for subkeys to be made from
 envnum = 40 #number of environments
-episodelength = 100
+episodelength = 10
+objnum = 2 #num of objects in environment
 
 
-envstates, idealstates = create_envbatch(key, envnum)
-agent = Agent(envstates[0])
-def agentact(input,idealstate):
-    inp = jnp.array([input,idealstate])
-    output = agent.policy(inp)
-    #grads, output = train_step(policy,input,optimizer,idealstate)
+
+def agentact(input):
+    #output = jnp.clip(agent.policy(input),min=-2,max=2)
+    output = agent.policy(input)
+    #grads = train(logits,input,optimizer)
+    action = jnp.clip(output, min=-2, max=2)
     #optimizer.update(grads)
     #output = agent.apply(input)
     #test = agent.policy.test()
     #actionval = agent(input)
-    return output #random action
+    return action, output #random action
 
 #wrap statestep and agentact in jit? will this parallelise execution of them?
 pureact = jax.jit(agentact)
@@ -41,20 +41,22 @@ env1img = []
 env1frames = []
 window = drawwindow(windowheight,windowwidth)
 fig = plt.figure()
-#@jax.jit
-def runstep(currentstates,idealstates):
+@jax.jit
+def runstep(currentstates):
     #agents act on environments
     agentact = jax.vmap(pureact,in_axes=(0)) #define the agentact func as applying pureact to the num of environments in a parallel way
-    actions = agentact(currentstates,idealstates) #apply the agentact function to the current states of all environments in parallel, output is a jnp array of shape (envnum, 2) where each row is the action for that environment
-    print(actions)
+    actions, outputs = agentact(currentstates) #apply the agentact function to the current states of all environments in parallel, output is a jnp array of shape (envnum, 2) where each row is the action for that environment
+    
     #step through states, note currentstates[1] is the agent states and currentstates[0] is the goal states
     newstates = jax.vmap(statestep,in_axes=(0,0,None))(currentstates,actions,limits) #apply the agent's transformations to the states
     currentstates = jnp.array(newstates)
     #extract first env state for image
     return currentstates
 @jax.jit
-def train(policy, data, optimizer ):
-    jax.vmap(train_step, in_axes=(None,0,0))(policy,data,optimizer)
+def train(policy,action, state, optimizer):
+    loss = train_step(policy,action, state, optimizer)
+    #grads = jax.vmap(train_step, in_axes=(0,0))(logits,data)
+    return loss
 @jax.jit
 def createimages(state, window):
     frame = drawframe(state, window)
@@ -63,25 +65,38 @@ def createimages(state, window):
 def drawframes(envstates,window):
     frames = jax.vmap(createimages,in_axes=(0,None))(envstates, window)# shape = (envnum, ...)
     return frames
-@jax.jit
-def computeloss(policy, data, idealstates):
-    loss, logits = jax.vmap(loss_fun, in_axes=(None,0,0))(policy,data,idealstates)
-    return loss, logits
-i = 0
-draw = True
-while i < episodelength:
-    envstates = runstep(envstates,idealstates)
-    data = envstates
-    if draw:
-        frames = drawframes(envstates,window)
-        print(jnp.shape(frames))
-        env1frame = createimages(envstates[0],window)
-        env1frames.append(env1frame)
-        #data = frames #for input being an image
-    loss, logits = computeloss(agent.policy,data,idealstates)
-    print("loss is: ", loss)
-    i += 1
+#@jax.jit
+#def computeloss(policy, data, objnum):
+#    loss, logits = jax.vmap(loss_fun, in_axes=(None,0,None))(policy,data,objnum)
+#    return loss, logits
 
+j = 0
+draw = True
+episodenum = 100
+
+agent = Agent()
+while j < episodenum:
+    i = 0
+    seed = 1830 + j
+    key = jax.random.key(seed)
+    envstates = create_envbatch(key, envnum)
+    while i < episodelength:
+        envstates = runstep(envstates)
+        #grads = jnp.mean(grads,axis=0)
+        train_step(agent.policy,envstates,optimizer)
+        #jax.vmap(optimizer.update)(grads)
+        #optimizer.update(grads)
+        data = envstates
+        if draw:
+            frames = drawframes(envstates,window)
+            env1frame = createimages(envstates[5],window)
+            env1frames.append(env1frame)
+        i += 1
+        print(i)
+        #data = frames #for input being an image
+    print("j ",j)
+    j += 1
+    #loss, logits = computeloss(agent.policy,data,objnum)
 i = 0
 for frame in env1frames:
     image = plt.imshow(frame,animated=True)

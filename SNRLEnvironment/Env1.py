@@ -41,7 +41,7 @@ class Agent:
     init_rng : int
     inp : int
     #velocitylimit : int
-    def __init__(self, initialstate : State):
+    def __init__(self):
         #self.policy = Policy()
         #self.knowledgeset = []
         #construct agent policy
@@ -59,7 +59,7 @@ def statestep(envstate,currentaction,limits):#limits is a tuple
     #currentaction = env.agent.act(env)
     #newcoords = addvelocity(envstate[1], currentaction) #envstate[1] is the agent velocity [500, 300] + [actionx, actiony]
     addedcoords = jax.vmap(lambda x, y : x + y)(envstate[1], currentaction)# add agent transformation (action) to agent pos
-    newcoords = jnp.clip(addedcoords,min=0, max=limits.at[1].get()) #make sure the new agent pos isn't outside of env limits assuming x = y for limits
+    newcoords = jnp.clip(addedcoords,min=0, max=limits[1]) #make sure the new agent pos isn't outside of env limits assuming x = y for limits
     newstate = jnp.array([envstate[0],newcoords])
     #might have to concatenate the agent state to goal state in another vmapped function 
     #if envstate[1][0] == envstate[0][0]:

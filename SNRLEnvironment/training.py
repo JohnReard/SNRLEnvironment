@@ -7,11 +7,11 @@ import random
 import matplotlib.pyplot as plt
 import matplotlib
 import matplotlib.animation as anim
-from agentneuralnetwork import train_step, optimizer
-
+from agentneuralnetwork import train_step, optimizer, loss_fun
+jax.config.update("jax_enable_x64", True)
 #creates key for subkeys to be made from
 envnum = 40 #number of environments
-episodelength = 10
+episodelength = 500
 objnum = 2 #num of objects in environment
 
 
@@ -41,7 +41,7 @@ env1img = []
 env1frames = []
 window = drawwindow(windowheight,windowwidth)
 fig = plt.figure()
-@jax.jit
+#@jax.jit
 def runstep(currentstates):
     #agents act on environments
     agentact = jax.vmap(pureact,in_axes=(0)) #define the agentact func as applying pureact to the num of environments in a parallel way
@@ -51,7 +51,7 @@ def runstep(currentstates):
     newstates = jax.vmap(statestep,in_axes=(0,0,None))(currentstates,actions,limits) #apply the agent's transformations to the states
     currentstates = jnp.array(newstates)
     #extract first env state for image
-    return currentstates
+    return currentstates, outputs
 @jax.jit
 def train(policy,action, state, optimizer):
     loss = train_step(policy,action, state, optimizer)
@@ -71,9 +71,9 @@ def drawframes(envstates,window):
 #    return loss, logits
 
 j = 0
-draw = True
-episodenum = 100
-
+draw = False
+episodenum = 80
+losses = []
 agent = Agent()
 while j < episodenum:
     i = 0
@@ -81,20 +81,31 @@ while j < episodenum:
     key = jax.random.key(seed)
     envstates = create_envbatch(key, envnum)
     while i < episodelength:
-        envstates = runstep(envstates)
+        envstates, actions = runstep(envstates)
         #grads = jnp.mean(grads,axis=0)
         train_step(agent.policy,envstates,optimizer)
-        #jax.vmap(optimizer.update)(grads)
-        #optimizer.update(grads)
-        data = envstates
-        if draw:
+        loss = loss_fun(actions,envstates)
+        print("loss: ", loss)
+        if draw and j > 47:
             frames = drawframes(envstates,window)
             env1frame = createimages(envstates[5],window)
             env1frames.append(env1frame)
+        elif draw and j < 3:
+            frames = drawframes(envstates,window)
+            env1frame = createimages(envstates[5],window)
+            env1frames.append(env1frame)
+        index1 = len(losses)-4
+        index2 = len(losses)
+        losses.append(loss)
+        if len(losses) > 5:
+            prevlosses = losses[index1 : index2]
+            i 
+            if loss in prevlosses:
+                i = episodelength - 1
         i += 1
-        print(i)
-        #data = frames #for input being an image
-    print("j ",j)
+        #print(i)
+        #data = frames #for input being an imagel
+    #print("j ",j)
     j += 1
     #loss, logits = computeloss(agent.policy,data,objnum)
 i = 0
@@ -103,7 +114,10 @@ for frame in env1frames:
     env1img.append([image])
     i += 1
 if draw:
-    ani = anim.ArtistAnimation(fig, env1img, interval=2, repeat_delay=1000)
+    ani = anim.ArtistAnimation(fig, env1img, interval=6, repeat_delay=1000)
     plt.show()
+drawwindow(windowheight,windowwidth)
+plt.plot(jnp.arange(0,len(losses)),losses)
+plt.show()
 
     

@@ -41,7 +41,7 @@ class AgentNeuralNetwork(nnx.Module):
 #key = jax.random.PRNGKey(0) PRNG key does not work on GPU, maybe try jax.random instead?
 ann = AgentNeuralNetwork(rngs = nnx.Rngs(0)) #seed neural net with rng
 #optimizer = nnx.ModelAndOptimizer(ann, optax.sgd(learning_rate=0.05),wrt=nnx.Param) #uses stndrd gradient descent algo as optimiser
-optimizer = nnx.Optimizer(ann, tx=optax.sgd(learning_rate=0.05),wrt=nnx.Param)
+optimizer = nnx.Optimizer(ann, tx=optax.sgd(learning_rate=0.025),wrt=nnx.Param)
 #@jax.jit
 def extrgoalagentstate(state):
     return state[0],state[1]
@@ -61,30 +61,36 @@ def compgrads(loss):
 #    loss = optax.squared_error(predictions =predictedstate, targets=idealstate).mean()
 #    return loss #returns loss and raw output
 #@nnx.jit #why jit this and not other funcs???
+def loss_fun(actions, states):
+    agentlocs, goallocs = jax.vmap(extrgoalagentstate)(states)
+    distances = jax.vmap(lambda x, y: x - y)(goallocs,agentlocs)
+    loss = jnp.mean(jax.vmap(lambda x,y: optax.squared_error(x,y))(actions,distances))
+    return loss.mean()#mean of all environment losses
 def train_step(policy, states, optimizer):
-    print(jnp.shape(states))
     def lossfn(policy,states):
         outputs = jax.vmap(policy)(states)
-        agentlocs, goallocs = jax.vmap(extrgoalagentstate)(states)
+        goallocs, agentlocs = jax.vmap(extrgoalagentstate)(states)
         distances = jax.vmap(lambda x,y: x - y)(goallocs,agentlocs)
-        #loss = jax.vmap(optax.squared_error)(outputs,distances).mean()
-        return jax.vmap(optax.squared_error)(outputs,distances).mean() #action and ideal action
+        #reward = difference between what should happen and what did happen.
+        # reward = optimal action - actual action
+        loss = jnp.mean(jax.vmap(lambda x,y: optax.squared_error(x,y))(outputs,distances))
+        return -loss #n length vector of losses for each env
+    #print(jnp.shape(states)) #action and ideal action
     #loss gradient is one scalar sum of all individual runs' losses
     #shape is (n,objnum, 2) or (environments, object states, coordinates)
     #losses = jax.vmap(loss_fun)(outputs,idealstates,agentloc)
-    #gradloss = nnx.grad(loss_fun)
-    valgrad = nnx.grad(lossfn, has_aux=True)
-    grads, loss = valgrad(policy,states)
-    print(loss)
-    #grads = loss_fun(outputs,idealstates,agentloc)
-    optimizer.update(policy,grads) 
-    #print(jax.tree.structure(grads))
-    #print(jax.tree.structure(nnx.state(policy, nnx.Param)))
-    #grads = nnx.grad(losses)
-    #optimizer.update()
-    #jax.vmap(optimizer.update)(grads)
-    #can't call loss_gradient because logits = model(data) can't be called
-    #return grads
+
+    valgrad = nnx.grad(lossfn)
+    grads = valgrad(policy,states)
+    optimizer.update(policy,grads)
+
+    #myloss = jax.vmap(lossfn,in_axes=(None,0))(policy,states)
+    #myloss=lossfn(policy,state)
+    #grads =nnx.grad(lossfn)
+    #optimizer.update(policy,grads)
+    
+    
+    
 
 
 #params = ann.init(key, initinput)

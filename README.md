@@ -1,7 +1,8 @@
 "# SNRLEnvironment" 
 CHANGELOG:
-- agent's params now being changed based on grads.
-- nested episodes in training.py.
+- Created loss graph.
+- training is parallelised inside the train_step function and loss function now, no need to call train_step in parallel.
+- episode resets if loss does not change for 5 states.
 
 
 FEATURES TO IMPLEMENT:
@@ -13,7 +14,7 @@ NOW:
 In training.py:
 
 NOW:
-- find a way to parallelise run_step() with train_step() inside it
+
 
 
 FUTURE:

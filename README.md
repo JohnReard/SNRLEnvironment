@@ -1,8 +1,12 @@
 "# SNRLEnvironment" 
 CHANGELOG:
-- Created loss graph.
-- training is parallelised inside the train_step function and loss function now, no need to call train_step in parallel.
-- episode resets if loss does not change for 5 states.
+- Removed episode resetting (may reimplement in future)
+- Now draw episode mean graph
+- Changed optimiser to adam
+- Computed distances and normalise by limits in input
+- Normalised output with tanh()
+- Jitted agentneuralnetwork functions
+
 
 
 FEATURES TO IMPLEMENT:
@@ -27,7 +31,7 @@ FUTURE:
 In agentneuralnetwork.py:
 
 NOW:
-- find a way to parallelise training.
+
 
 
 FUTURE:

@@ -17,6 +17,8 @@ def showplt(window):
     plt.imshow(window)
     plt.show()
 
+def createplot():
+    fig, ax = plt.subplots()
 def drawframe(state, window):
     goalcoord = state[0]
     agentcoord = state[1]
@@ -37,7 +39,7 @@ def drawframe(state, window):
     return window
     #plt.tight_layout()
     
-def update(frames,i ):
+def update(frames,i):
     x=(frames[i][0])
     y=(frames[i][1])
     #on the first frame draw the window and image

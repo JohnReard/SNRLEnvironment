@@ -70,10 +70,17 @@ class AgentTests(unittest.TestCase):
         self.assertEqual(jnp.shape(self.poststates),jnp.shape(self.prestates))
 
         self.tearDown()
-    def test_initstates(self):
+    #def test_initstates(self):
+    #    self.setUp()
+#
+#        self.tearDown()
+class EnvTests(unittest.TestCase):
+    def setUp(self):
+        pass
+    def checkcores(self):
         self.setUp()
-
-        self.tearDown()
+        devices = jax.devices()
+        self.assertIs(devices)
 
 if __name__ == '__main__':
     unittest.main()

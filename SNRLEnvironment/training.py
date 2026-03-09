@@ -9,6 +9,7 @@ import matplotlib
 import matplotlib.animation as anim
 from matplotlib.animation import FFMpegWriter
 from agentneuralnetwork import train_step, optimizer
+import os
 jax.config.update("jax_enable_x64", True)
 #creates key for subkeys to be made from
 envnum = 350 #number of environments
@@ -73,13 +74,14 @@ print("len env1frames: ",len(env1frames))
 print("len allanims: ", len(allanims))
 env1img = []
 j=1
-#while j < len(allanims):
-#    i=0
-#    frames = allanims[0]
-#    print("len frames: ",len(frames))
-#    env1img=[]
-#    while i+1 < len(frames)/episodenum:
-#        print(i)
+@jax.jit
+def f(state,agentstate):
+    objx = jnp.array(state[0])
+    objy = jnp.array(state[1])
+    objrad = jnp.array(state[2])
+    return jnp.where(((objx +  objrad < agentstate[0] - agentstate[2]) & (objx - objrad < agentstate[0] - agentstate[2]))
+            |((objy -  objrad > agentstate[1] + agentstate[2]) & (objy +  objrad > agentstate[0] - agentstate[2])),jnp.array([objx,objy,objrad]),)
+
 for frame in env1frames:
     
     image = plt.imshow(frame,animated=True)

@@ -3,9 +3,12 @@ import jax
 import jax.numpy as jnp
 import jax.random
 #import training, Env1
-from training import pureact, key
+from training import agent, key, optimizer, train_step
 from Env1 import statestep
+import time
 from batching import create_envbatch
+import os
+import psutil
 
 
 class AgentTests(unittest.TestCase):
@@ -16,16 +19,16 @@ class AgentTests(unittest.TestCase):
         seed = 1901
         key = jax.random.key(seed)
         #make agent move Do i need to call the functions or can i just take the variables straight from the training.py file?
-        self.envnum = 20 #test if at minimum feature works for 2 environments
-        self.prestates = create_envbatch(key,self.envnum) #test state for 2 environments
+        self.envnum = 3 #test if at minimum feature works for 20 environments
         self.limits = jnp.array([600,600])
+        self.prestates = create_envbatch(key,self.envnum,self.limits) #test state for 2 environments
+        
 
         #get agentstates
         self.preagentstates = jax.vmap(lambda x : x[self.agentindex])(self.prestates)
 
         #call functions, statestep works when there are multiple actions
-        agentact = jax.vmap(pureact,in_axes=(0,None, None))
-        self.actions = agentact(self.prestates, key, subkey)
+        loss, self.actions = train_step(agent.policy,self.prestates,optimizer)
         self.poststates = jax.vmap(statestep, in_axes=(0,0,None))(self.prestates,self.actions, self.limits)
         
         #calculate what post states should be, works when there is one action
@@ -76,11 +79,54 @@ class AgentTests(unittest.TestCase):
 #        self.tearDown()
 class EnvTests(unittest.TestCase):
     def setUp(self):
-        pass
-    def checkcores(self):
+        a = jnp.zeros(100)
+        b = jnp.zeros(10000000)
+        def jitfunc(arr):
+            jax.vmap(lambda el: el + 1)(arr)
+        def timedfunc(arr):
+            for el in arr:
+                el + 1
+        jittedfunc = jax.jit(jitfunc)
+
+        #call jitted functions
+        beforea = time.time()
+        jittedfunc(a)
+        aftera = time.time()
+
+        beforeb = time.time()
+        jittedfunc(b)
+        afterb = time.time()
+
+        self.jitatime = afterb-beforeb
+        self.jitbtime = aftera-beforea
+
+        #call non-jitted functions
+        beforea = time.time()
+        timedfunc(a)
+        aftera = time.time()
+
+        beforeb = time.time()
+        timedfunc(b)
+        afterb = time.time()
+
+        self.timedatime = afterb-beforeb
+        self.timedbtime = aftera-beforea
+
+    def test_paraspeedup(self):
         self.setUp()
+        jitimediff = self.jitbtime-self.jitatime
+        timeddiff = self.timedbtime-self.timedatime
+        print(f'{self.timedbtime:.{7}f}',f'{self.timedatime:.{7}f}')
+        self.assertTrue(self.jitbtime<self.jitatime*10)#as f(b) has 10* more operations than f(a), if parallelised time(f(b)) should be less than time(f(a))*10
+        self.assertTrue(self.timedbtime>self.timedatime)
+        #self.assertEqual(self.timedatime,self.timedbtime)
+        
+
+
         devices = jax.devices()
-        self.assertIs(devices)
+        print(devices)
+        self.tearDown()
+    #def test_coreusage():
 
 if __name__ == '__main__':
     unittest.main()

@@ -57,10 +57,19 @@ class Agent:
 def statestep(envstate,currentaction,limits):#limits is a tuple
     #self.agent.observe(self.currentstate)
     #currentaction = env.agent.act(env)
+    #envstate[1][2] is the radius of the agent
     #newcoords = addvelocity(envstate[1], currentaction) #envstate[1] is the agent velocity [500, 300] + [actionx, actiony]
     addedcoords = jax.vmap(lambda x, y : x + y)(envstate[1], currentaction)# add agent transformation (action) to agent pos
-    newcoords = jnp.clip(addedcoords,min=0, max=limits[1]) #make sure the new agent pos isn't outside of env limits assuming x = y for limits
+    newcoords = jnp.clip(addedcoords,min=0+envstate[1][2], max=limits[1]+envstate[1][2]) #make sure the new agent pos isn't outside of env limits assuming x = y for limits
+    objectstates = envstate[2:len(envstate)]
+    agentstate = envstate[1]
+    #detect collisions
+    jnp.where(objectstates(objectstates[0] +  objectstates[2] < agentstate[0] - agentstate[2] & objectstates[0] - objectstates[2] < agentstate[0] - agentstate[2])
+                     |(objectstates[1] -  objectstates[2] > agentstate[1] + agentstate[2] & objectstates[0] +  objectstates[2] > agentstate[0] - agentstate[2]),0,)
+    jax.vmap(detectcollision)(objectstates,envstate[1])
+    #if envstate[1][0] + envstate[1][2] < objectstates and envstate[1][0] - envstate[1][2]
     newstate = jnp.array([envstate[0],newcoords])
+    #go through all the limits and clip?
     #might have to concatenate the agent state to goal state in another vmapped function 
     #if envstate[1][0] == envstate[0][0]:
     #    #env.goalreached()
@@ -72,6 +81,11 @@ def addvelocity(a,b):#might not be vectorisable because might not be a pure func
         addedcoords = jax.vmap(lambda x, y : x + y)(a, b)
         newcoords = jnp.clip(addedcoords,min=-600, max=600) #Clips x and y coords to -limits and limits #LIMITS ARE HARDCODED, CHANGE IN FUTURE
         return newcoords
+@jax.jit
+def detectcollision(objectstates,agentstate):
+    #where object +xlimit is smaller than agent -xlimit and object -xlim is smaller than agent +xlim, viceversa for y.
+    return 
+
 @jax.tree_util.register_dataclass
 @dataclasses.dataclass
 class EnvCollection:

@@ -1,8 +1,12 @@
 "# SNRLEnvironment" 
 CHANGELOG:
-- Began to work on object collision.
 
-
+- Added objects to environment.
+- Implemented collision detection and collision correction for objects.
+- Changed number of inputs to agent, due to objects' states being added.
+- Changed env limit clipping implementation.
+- Changed loss func to accept more input.
+- Made changes to batching to create objects and also generate rand ints in onefunction call.
 
 FEATURES TO IMPLEMENT:
 

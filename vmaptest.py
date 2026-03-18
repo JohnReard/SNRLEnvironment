@@ -7,33 +7,19 @@ state1 = jnp.array([[30,30,6],
 state2 = jnp.array([[100,100,10],
                     [200,200,10]])
 states = jnp.array([state1,state2])
-actions = jnp.array([[5,5],[5,5]])
-states = jnp.array([[8,22,2],[80,220,2]])
-agent = jnp.array([7,24,5])
+actions = jnp.array([[50,5],[5,5]])
+states = jnp.array([[8,22,2],[80,220,2],[9,24,1],[14,24,1]])
+agent = jnp.array([7,10,4])
 
 
-agentstate = jnp.array(agent)
-@jax.jit
-def f(state,agentstate):
-     #state will not have agent (state[1]) in it or goal (state[0])
-     #agentstate is the state of the agent AFTER movement, we clip it here.
-    objx = jnp.array(state[0])
-    objy = jnp.array(state[1])
-    objrad = jnp.array(state[2])
-    legalarray = jnp.where(((objx +  objrad < agentstate[0] - agentstate[2]) & (objx - objrad < agentstate[0] - agentstate[2]))
-            |((objy -  objrad > agentstate[1] + agentstate[2]) & (objy +  objrad > agentstate[0] - agentstate[2])),jnp.array([objx,objy,objrad]),0)
-    jnp.clip(agentstate, min=)
-    return legalarray
-    
+array= jnp.array([[0,0,0],[1,4,1],[0,0,0]])
+#                                                        in_axes=(0,None))(array,agentstate)
+array = jnp.trim_zeros(array)
+print(array)
+#array = jnp.ravel(array)
+#result = jax.vmap(lambda array: jnp.where(array[0]>2,array[0],0))(array)
+#result = jax.vmap(lambda array, agentstate: (((array[0]+array[2])-(agentstate[0]+agentstate[2]))+agentstate[1], ((array[1]+array[2])-(agentstate[1]+agentstate[2]))+agentstate[1]),in_axes=(0,None))(result,agentstate)
 
-
-@jax.jit
-def fjit(states,agentstate):
-    return jax.vmap(f,in_axes=(0,None))(states,agentstate)
-     
-result = fjit(states,agentstate)
-result = jax.vmap(lambda arr: arr[2] > 0)(result)
-print(result)
 #print(jnp.nonzero(result))
 #myfunc = jax.vmap(lambda newarray: jnp.where(newarray[2]==0))
 #print(myfunc(result))

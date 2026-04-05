@@ -1,29 +1,38 @@
+import os
+os.environ["XLA_FLAGS"] = '--xla_force_host_platform_device_count=2'
 from Env1 import  Agent, statestep, addvelocity
 from renderer import drawframe, drawwindow, showplt, update
 from batching import create_envbatch
 import jax
+from jax.sharding import PartitionSpec as P
 import jax.numpy as jnp
 import random
 import matplotlib.pyplot as plt
 import matplotlib
 import matplotlib.animation as anim
 from matplotlib.animation import FFMpegWriter
+import seaborn as sb
 from Env1 import train_step, lossfn, act
 from agentneuralnetwork import AgentNeuralNetwork
 from flax import nnx as nnx
 import optax
 import os
+from sbx import SAC 
 jax.config.update("jax_enable_x64", True)
 #creates key for subkeys to be made from
-envnum = 60000 #number of environments
-episodelength = 100
-objnum = 18 #num of objects in environment
 
+devices = jax.devices()
+mesh = jax.make_mesh((len(devices),),('databatch'))
+sharding = jax.sharding.NamedSharding(mesh, P('databatch'))
+
+envnum = 60000 #number of environments
+episodelength = 200
+objnum = 18 #num of objects in environment
+rad = 10
 windowwidth = 600
 windowheight = 600
 # env limits must be >= than window size
 limits = jnp.array([0,600]) 
-
 
 env1img = []
 env1frames = []
@@ -48,7 +57,7 @@ def drawframes(envstates,window):
     return frames
 j = 0
 draw = True
-episodenum = 80
+episodenum = 1
 avglosslist = []
 losses= []
 actionlist = []
@@ -64,6 +73,18 @@ while j < episodenum:
     seed = 6870 * (j + 1)
     key = jax.random.key(seed)
     envstates = create_envbatch(key, envnum,limits,objnum,10)
+    splitstates = jnp.split(envstates, len(devices))
+    devind = 0
+    for batch in splitstates:
+        #envstates = jax.device_put(envstates, devices[devind])
+        #should append to envstates really?
+        print(batch.shape)
+        #shape = envstates.shape
+        #jax.debug.visualize_sharding(envstates,shape)
+        devind +=1
+    #jax.debug.visualize_array_sharding(envstates)
+    goalinitstates = jax.vmap(lambda stt: stt[0])(envstates)
+    agentinitstates = jax.vmap(lambda stt: stt[1])(envstates)
     while i < episodelength:
         window = drawwindow(windowheight,windowwidth)
         #loss,actions = train_step(agent.policy,envstates,optimizer,collision)
@@ -80,10 +101,11 @@ while j < episodenum:
             firstenvcol.append(collision[0])
             env1frame = createimages(envstates[0],window,collision[0])
             env1frames.append(env1frame)
+        if i % 50 == 0:
+            loss, actions = train_step(agent.policy,envstates,optimizer,collision)
         i += 1
     #allanims.append(env1frames)
-    loss, actions = train_step(agent.policy,envstates,optimizer,collision)
-    episodelength += 100
+    
     j += 1
 env1img = []
 j=1
@@ -115,7 +137,7 @@ ani.save("animationenv.gif", writer='pillow', fps=30)
 #    ani.save('animation.gif', writer='pillow', fps=30)
     #plt.show()
     #ani.save('animation.gif', writer='pillow', fps=30)
-fig, plots = plt.subplots(1,2)
+fig, plots = plt.subplots(1,3)
 plots[0].plot(jnp.arange(0,len(losses)),losses)  
 means=[]
 i=0
@@ -125,6 +147,14 @@ while i < len(losses):
     mylossthing = jnp.mean(mylossthing)
     means.append(mylossthing)
     i+=episodelength
-plots[1].plot(jnp.arange(0,len(means)),means)  
+plots[1].plot(jnp.arange(0,len(means)),means)
+
+
+
+((xmin,xmax), (ymin,ymax), density) = jax.vmap(lambda stt: ((stt[0]-rad,stt[0]+rad),(stt[1]-rad,stt[1]+rad),1))(goalinitstates)
+xs, ys = (xmin,xmax),(ymin,ymax)
+goalinitstates = jnp.array(jax.vmap(lambda sts:[sts[0].astype(int),sts[1].astype(int)])(goalinitstates))
+heatmap = sb.heatmap(goalinitstates,annot=False,cmap='viridis')
+plots[2] = heatmap
 plt.savefig("plots.png")
 print(firstenvcol)

@@ -5,7 +5,6 @@ import optax
 from flax import nnx as nnx
 from jax import make_jaxpr
 import agentneuralnetwork
-import random
 import jax.numpy as jnp 
 
 
@@ -22,6 +21,31 @@ class Agent:
     #velocitylimit : int
     def __init__(self, policy):
         self.policy = policy
+#uses sfm algorithm to pathfind for INDIVIDUAL humans
+@jax.jit
+def sfm(objstate, objstates, counter, key):
+    #check to see if goal needs to change
+    key1, key2 = jax.random.split(key)
+    #10% chance human changes goal
+    changegoal = jax.random.uniform(key1, minval=counter-20,maxval=counter+5)
+    if counter < changegoal:
+    #change goal if necessary
+        randomgoal = jax.random.uniform(key2,minval=10,maxval=100,shape=jnp.shape(2))
+        potentialgoal = objstate + randomgoal
+        goal = checkillegalstate(potentialgoal) #returns closest legal state
+    #create movement towards goal
+    objmove = goal - objstate  
+    #check if movement brings you towards collidable object or static object
+    distances = detectdistances(objstate,objstates)
+    #if it does move away from object
+    objtrans = objmove - jnp.sum(distances)
+    #see whether agent stops to "talk" to other agent, or changes goal.
+
+    return key1
+@jax.jit
+def detectdistances(objstate, otherobjs):
+    dists = jax.vmap(lambda obj, othobj : othobj - obj, in_axes=(None,0))(objstate, otherobjs)
+    return jnp.where(dists > 10, 0, dists)
 @jax.jit
 def detectcollision(movingstate, objectstate):
     leftarightb = (movingstate[0] - movingstate[2]) < (objectstate[0] + objectstate[2]) 

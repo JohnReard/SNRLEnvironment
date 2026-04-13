@@ -41,7 +41,11 @@ def sfm(objstate, objstates, counter, key):
     objtrans = objmove - jnp.sum(distances)
     #see whether agent stops to "talk" to other agent, or changes goal.
 
-    return key1
+    return key1, objtrans
+@jax.jit
+def checkillegalstate(state):#checks if point is in static object collision
+    
+    pass
 @jax.jit
 def detectdistances(objstate, otherobjs):
     dists = jax.vmap(lambda obj, othobj : othobj - obj, in_axes=(None,0))(objstate, otherobjs)

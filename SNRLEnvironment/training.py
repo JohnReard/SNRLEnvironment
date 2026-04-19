@@ -16,8 +16,7 @@ from Env1 import train_step, lossfn, act
 from agentneuralnetwork import AgentNeuralNetwork
 from flax import nnx as nnx
 import optax
-import os
-from sbx import SAC 
+import os 
 jax.config.update("jax_enable_x64", True)
 #creates key for subkeys to be made from
 
@@ -71,8 +70,8 @@ collision = 0
 while j < episodenum:
     i = 0
     seed = 800 * (j + 1)
-    key = jax.random.key(seed)
-    envstates, statobjs, rotations, dists = create_envbatch(key, envnum,limits,objnum,10,3)
+    
+    envstates, statobjs, rotations, dists = create_envbatch(seed, envnum,limits,objnum,10,3)
     print("Shape at batching is: ", jnp.array(statobjs).shape,statobjs[0])
     print("rotation is ", rotations[0])
     print("dists: ", dists)
@@ -103,7 +102,7 @@ while j < episodenum:
             #frames = drawframes(envstates,window)
             firstenvcol.append(collision[0])
             print("shape is ",jnp.array(statobjs).shape)# should be 3,2 but is 30
-            env1frame = createimages(envstates[0],window,collision[0],statobjs[0])
+            env1frame = createimages(envstates[3],window,collision[3],statobjs[3])
             env1frames.append(env1frame)
         if i % 50 == 0:
             loss, actions = train_step(agent.policy,envstates,optimizer,collision)

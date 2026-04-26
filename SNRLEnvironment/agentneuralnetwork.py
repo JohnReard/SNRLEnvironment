@@ -8,9 +8,9 @@ class AgentNeuralNetwork(nnx.Module):
         self.n_features = int(n_features)
         self.n_hidden = int((n_features/2))
         self.n_targets = 2
-        self.layer1 = nnx.Linear(self.n_features-14,self.n_hidden, rngs=rngs)   
-        self.layer2 = nnx.Linear(self.n_hidden,self.n_hidden, rngs=rngs)
-        self.layer4 = nnx.Linear(self.n_hidden,n_features,rngs=rngs)
+        self.layer1 = nnx.Linear(self.n_features,self.n_features, rngs=rngs)   
+        self.layer2 = nnx.Linear(self.n_features,self.n_features, rngs=rngs)
+        self.layer4 = nnx.Linear(self.n_features,self.n_features,rngs=rngs)
         self.layer5 = nnx.Linear(self.n_features,self.n_targets, rngs=rngs) 
         #optimiser adjusts parameters/weights(?) of model to minimise error returned by cost function  
     def __call__(self, x):

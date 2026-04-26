@@ -26,7 +26,7 @@ sharding = jax.sharding.NamedSharding(mesh, P('databatch'))
 
 envnum = 6 #number of environments
 episodelength = 200
-objnum = 18 #num of objects in environment
+objnum = 2 #num of objects in environment
 rad = 10
 windowwidth = 600
 windowheight = 600
@@ -61,20 +61,21 @@ avglosslist = []
 losses= []
 actionlist = []
 allanims=[]
-ann = AgentNeuralNetwork(rngs = nnx.Rngs(0),n_features= ((objnum *3)) )
+featurenum = 2 * (objnum+2)
+ann = AgentNeuralNetwork(rngs = nnx.Rngs(0),n_features= featurenum )
 optimizer = nnx.Optimizer(ann, tx=optax.adam(learning_rate=0.08),wrt=nnx.Param)
 agent = Agent(policy=ann)
 firstenvcol=[]
 collision = 0
 #fig1 = plt.figure()
+
 while j < episodenum:
     i = 0
-    seed = 800 * (j + 1)
+    seed = 8000 * (j + 1)
     
-    envstates, statobjs, rotations, dists = create_envbatch(seed, envnum,limits,objnum,10,3)
+    envstates, statobjs = create_envbatch(seed, envnum,limits,objnum,10,3)
+    print("statobjs: ",statobjs)
     print("Shape at batching is: ", jnp.array(statobjs).shape,statobjs[0])
-    print("rotation is ", rotations[0])
-    print("dists: ", dists)
     splitstates = jnp.split(envstates, len(devices))
     devind = 0
     for batch in splitstates:
@@ -102,6 +103,7 @@ while j < episodenum:
             #frames = drawframes(envstates,window)
             firstenvcol.append(collision[0])
             print("shape is ",jnp.array(statobjs).shape)# should be 3,2 but is 30
+            print(statobjs[3])
             env1frame = createimages(envstates[3],window,collision[3],statobjs[3])
             env1frames.append(env1frame)
         if i % 50 == 0:

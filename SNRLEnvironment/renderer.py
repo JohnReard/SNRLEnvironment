@@ -24,18 +24,18 @@ def drawshape(window,state,colour):
     window = tc.draw_circle(x,y,radius,colour,window)
     return window
 def drawrect(window,state):
-    print(state.shape)
+
+    print("state shape is: ",state.shape)
     vert1 = state[0].astype(int)
     vert2 = state[1].astype(int)
     vert3 = state[2].astype(int)
     vert4 = state[3].astype(int)
-    print(vert1)
-    yellow = jnp.array([120,10,0])
+    jax.debug.print("vert1 is : {x}",x=vert1)
+    yellow = jnp.array([1.0,0.8,0])
     window = tc.draw_line(vert1[0],vert1[1],vert2[0],vert2[1],radius=1,t=window,color=yellow)
     window = tc.draw_line(vert3[0],vert3[1],vert4[0],vert4[1],radius=1,t=window,color=yellow)
     window = tc.draw_line(vert1[0],vert1[1],vert3[0],vert3[1],radius=1,t=window,color=yellow)
     window = tc.draw_line(vert2[0],vert2[1],vert4[0],vert4[1],radius=1,t=window,color=yellow)
-
     return window
 def createplot():
     fig, ax = plt.subplots()
@@ -53,7 +53,7 @@ def drawframe(states, window,collision,staticstates):
         window = drawshape(window,state,colour)
         i+=1
     for statstate in staticstates:
-        print("stat state is: ",statstate)
+        jax.debug.print("stat state is: {x} ",x=statstate)    
         window  = drawrect(window,statstate)
     
     return window

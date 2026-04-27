@@ -1,10 +1,7 @@
-from dataclasses import dataclass
-import dataclasses
+
 import jax
 import optax
 from flax import nnx as nnx
-from jax import make_jaxpr
-import agentneuralnetwork
 import jax.numpy as jnp 
 
 
@@ -23,29 +20,34 @@ class Agent:
         self.policy = policy
 #uses sfm algorithm to pathfind for INDIVIDUAL humans
 @jax.jit
-def sfm(objstate, objstates, counter, key):
+def sfm(objstate, objstates, randomgoal):
     #check to see if goal needs to change
-    key1, key2 = jax.random.split(key)
     #10% chance human changes goal
-    changegoal = jax.random.uniform(key1, minval=counter-20,maxval=counter+5)
-    if counter < changegoal:
-    #change goal if necessary
-        randomgoal = jax.random.uniform(key2,minval=10,maxval=100,shape=jnp.shape(2))
-        potentialgoal = objstate + randomgoal
-        goal = checkillegalstate(potentialgoal) #returns closest legal state
+    
+    packagedgoal = jnp.array([randomgoal[0],randomgoal[1],0])
+
+    #random stopping
+    packagedgoal
+    #potentialgoal = objstate + packagedgoal
+    goal = checkillegalstate(packagedgoal) #returns closest legal state
     #create movement towards goal
     objmove = goal - objstate  
+    #jax.debug.print("objmove is: {z}", z=objmove)
     #check if movement brings you towards collidable object or static object
     distances = detectdistances(objstate,objstates)
     #if it does move away from object
     objtrans = objmove - jnp.sum(distances)
     #see whether agent stops to "talk" to other agent, or changes goal.
 
-    return key1, objtrans
+
+    clipinput = jnp.array([objmove[0],objmove[1]])
+    mov = jnp.clip(clipinput, min=jnp.array([-2,-2]),max=jnp.array([2,2]))
+
+    returnedstate = jnp.array([objstate[0] +  mov[0] ,objstate[1] + mov[1], objstate[2]])
+    return returnedstate
 @jax.jit
 def checkillegalstate(state):#checks if point is in static object collision
-    
-    pass
+    return state
 @jax.jit
 def detectdistances(objstate, otherobjs):
     dists = jax.vmap(lambda obj, othobj : othobj - obj, in_axes=(None,0))(objstate, otherobjs)
@@ -64,7 +66,7 @@ def vmapcollisions(movingstate, objectstates):
     return jax.vmap(lambda agentstate, objectstates:jnp.where(detectcollision(agentstate,objectstates),objectstates, 0),in_axes=(None,0))(movingstate,objectstates)
 
 @jax.jit
-def statestep(envstate,currentaction,limits):#limits is a tuple
+def statestep(envstate,currentaction,limits,randomgoal):#limits is a tuple
     #if I want to move multiple objects currentaction will be an array of actions and addedcoords will be vmapped
     #the collision detection will also be vmapped over all objects that have moved (maybe have moving objects as a separate argument?)
     #newcoords = addvelocity(envstate[1], currentaction) #envstate[1] is the agent velocity [500, 300] + [actionx, actiony]
@@ -74,6 +76,15 @@ def statestep(envstate,currentaction,limits):#limits is a tuple
     minlim = jnp.array([limits[0]+envstate[1][2],limits[0]+envstate[1][2]])
     newcoords = jnp.clip(addedcoords,min=minlim, max=maxlim) #make sure the new agent pos isn't outside of env limits assuming x = y for limits
     objectstates = envstate[2:len(envstate)]#for non-collidable goal
+    #create an array of objectstates len for sfmcounter and map over it, otherwise all humans change direction at the same time
+    newobjstates = jax.vmap(sfm,in_axes=(0,None,0))(objectstates,objectstates,randomgoal)
+    #jax.debug.print("objmove is {x}", x=objmove[0])
+    #sepobjstates = jax.vmap(lambda objstates: ([objstates[0],objstates[1]],objstates[2]))(objectstates)
+    #addedobjstates = jax.vmap(lambda mov, prev : [prev[0]+mov[0],prev[1]+mov[1]])(objmove,sepobjstates[0])
+    #newobjstates = jax.vmap(lambda adobj, sepobj: [adobj[0],adobj[1],sepobj[-]])
+    
+    #check for obj collisions
+
     agentstate = jnp.array([newcoords[0],newcoords[1],envstate[1][2]])
     #detect collisions
     collidedobjects = vmapcollisions(agentstate, objectstates)
@@ -99,8 +110,18 @@ def statestep(envstate,currentaction,limits):#limits is a tuple
 
 
     newcoords = jnp.array([newx,newy,agentstate[2]])
-    print("prev state: ",envstate.at[1].get())
-    newstate = envstate.at[1].set(newcoords) #change index to be dynamic if other object is moving
+    array = jnp.array([envstate[0],newcoords])
+    print("newobjstates: ", array.shape)
+    newstate = jnp.concatenate([array, newobjstates], axis=0)
+    print("shape of newstate is: ",newstate.shape)
+
+    #print("prev state: ",envstate.at[1].get())
+    #newstate = envstate.at[1].set(newcoords) #change index to be dynamic if other object is moving
+
+    
+    #detect collisions for newobjstates
+
+
     #collision=xobj.size
     #go through all the limits and clip?
     #might have to concatenate the agent state to goal state in another vmapped function 

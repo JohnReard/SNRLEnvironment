@@ -1,18 +1,17 @@
 import os
 os.environ["XLA_FLAGS"] = '--xla_force_host_platform_device_count=2'
-from Env1 import  Agent, statestep, addvelocity
-from renderer import drawframe, drawwindow, showplt, update
+from Env1 import statestep
+from renderer import drawframe, drawwindow
 from batching import create_envbatch
 import jax
 from jax.sharding import PartitionSpec as P
 import jax.numpy as jnp
-import random
 import matplotlib.pyplot as plt
 import matplotlib
 import matplotlib.animation as anim
 from matplotlib.animation import FFMpegWriter
 import seaborn as sb
-from Env1 import train_step, lossfn, act
+from Env1 import lossfn, act
 
 from flax import nnx as nnx
 import optax
@@ -39,9 +38,9 @@ env1frames = []
 fig = plt.figure()
 
 @jax.jit
-def runstep(currentstates,actions):
+def runstep(currentstates,actions,randomgoals,limits):
     #step through states, note currentstates[1] is the agent states and currentstates[0] is the goal states
-    newstates, collision = jax.vmap(statestep,in_axes=(0,0,None))(currentstates,actions,limits) #apply the agent's transformations to the states
+    newstates, collision = jax.vmap(statestep,in_axes=(0,0,None,0))(currentstates,actions,limits,randomgoals) #apply the agent's transformations to the states
     #jax.debug.print("agentloc : {shape}", shape=newstates[0][1])
     currentstates = jnp.array(newstates)
     #extract first env state for image
@@ -56,8 +55,9 @@ def drawframes(envstates,window):
     return frames
 
 #fig1 = plt.figure()
-def envinit(objnum, objrad, policy, optimizer, seed):
+def envinit(objnum, objrad, policy, optimizer, seed, envnum):
     #init
+    limits = jnp.array([0,600]) 
     seed = seed*seed
     featurenum = 2 * (objnum+2)
     envstates, statobjs = create_envbatch(seed, envnum,limits,objnum,objrad,3)
@@ -77,16 +77,36 @@ def envinit(objnum, objrad, policy, optimizer, seed):
         #jax.debug.visualize_array_sharding(envstates)
 
     window = drawwindow(600,600)
-
+    #random goals for humans
+    sfmkeys = jax.random.key(seed*8)
+    randomgoals = jax.random.uniform(sfmkeys,minval=limits[0]+objrad,maxval=limits[1]-objrad,shape=(len(envstates),objnum,2))
+    #random step at which to change goal
+    sfmcounter = jax.random.uniform(sfmkeys,minval=1,maxval=50, shape=(len(envstates),objnum,2))
     goalinitstates = jax.vmap(lambda stt: stt[0])(envstates)
     agentinitstates = jax.vmap(lambda stt: stt[1])(envstates)
-    return policy, optimizer, envstates,statobjs, window
-def envstep(episodeindex,envstates,statobjs, policy, losses):
+    return (envstates,statobjs, randomgoals, objrad, limits, sfmcounter), optimizer, window, policy
+def envstep(inits,policy,stepindex,episodeindex,losses,goallog):
+    envstates, statobjs, randomgoals, objrad, limits, sfmcounter = inits
+    print("envstates are: ",envstates[3])
+    sfmkeys = jax.random.key(stepindex*600*episodeindex)
+    #sfmkeys = jax.random.uniform(sfmkeys,shape=(len(envstates)))
+    #changegoal = jax.random.uniform(sfmkeys, shape=(len(envstates),len(envstates[0])-2,2),minval=sfmcounter-20,maxval=sfmcounter+5)
+    sfmcounter = jax.vmap(lambda changegoalcounter: changegoalcounter + 1)(sfmcounter)
+    newrandomgoals = jax.random.uniform(sfmkeys,minval=limits[0]+objrad,maxval=limits[1]-objrad,shape=(len(envstates),len(envstates[0])-2,2))
+    randomgoals = jnp.where(sfmcounter > 59, newrandomgoals,randomgoals)
+    #reset counters to 0 if met
+    sfmcounter = jnp.where(sfmcounter>59,0,sfmcounter)
+    #goallog.append(newrandomgoals[0])
+    #print("newrandom goals: ",newrandomgoals[0][0])
+    #randomly choose whether to change direction
+    #sfmgoals = jnp.where(sfmcounter<changegoal[0], newrandomgoals, randomgoals)
+    #print("selected goal vs random: ",sfmgoals[0][0]," " ,newrandomgoals[0][0])
     actions = act(policy,envstates)
-    envstates, collision = runstep(envstates,actions)
+    envstates, collision = runstep(envstates,actions,randomgoals,limits)
     loss, outputs = lossfn(policy,envstates)
     losses.append(loss)
-    return envstates, statobjs, loss, collision, losses
+    return (envstates,statobjs, randomgoals, objrad, limits,sfmcounter),loss, collision
+    #return envstates, statobjs, loss, collision, losses, randomgoals
 def drawenv(envstates, statobjs, collision, window, env1frames):
     #frames = drawframes(envstates,window)
     #firstenvcol.append(collision[0])

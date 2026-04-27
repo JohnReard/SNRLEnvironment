@@ -13,7 +13,7 @@ import matplotlib.animation as anim
 from matplotlib.animation import FFMpegWriter
 import seaborn as sb
 from Env1 import train_step, lossfn, act
-from agentneuralnetwork import AgentNeuralNetwork
+
 from flax import nnx as nnx
 import optax
 import os 
@@ -54,112 +54,83 @@ def createimages(state, window, collision, statobjs):
 def drawframes(envstates,window):
     frames = jax.vmap(createimages,in_axes=(0,None,None))(envstates, window)# shape = (envnum, ...)
     return frames
-j = 0
-draw = True
-episodenum = 1
-avglosslist = []
-losses= []
-actionlist = []
-allanims=[]
-featurenum = 2 * (objnum+2)
-ann = AgentNeuralNetwork(rngs = nnx.Rngs(0),n_features= featurenum )
-optimizer = nnx.Optimizer(ann, tx=optax.adam(learning_rate=0.08),wrt=nnx.Param)
-agent = Agent(policy=ann)
-firstenvcol=[]
-collision = 0
-#fig1 = plt.figure()
 
-while j < episodenum:
-    i = 0
-    seed = 8000 * (j + 1)
-    
-    envstates, statobjs = create_envbatch(seed, envnum,limits,objnum,10,3)
-    print("statobjs: ",statobjs)
-    print("Shape at batching is: ", jnp.array(statobjs).shape,statobjs[0])
+#fig1 = plt.figure()
+def envinit(objnum, objrad, policy, optimizer, seed):
+    #init
+    seed = seed*seed
+    featurenum = 2 * (objnum+2)
+    envstates, statobjs = create_envbatch(seed, envnum,limits,objnum,objrad,3)
+    #init policy
+    policy = policy(rngs = nnx.Rngs(0), n_features= featurenum)
+    optimizer = nnx.Optimizer(policy, tx=optimizer,wrt=nnx.Param)
+    #sharding
     splitstates = jnp.split(envstates, len(devices))
     devind = 0
     for batch in splitstates:
-        #envstates = jax.device_put(envstates, devices[devind])
+        envstates = jax.device_put(envstates, devices[devind])
         #should append to envstates really?
         print(batch.shape)
         #shape = envstates.shape
         #jax.debug.visualize_sharding(envstates,shape)
         devind +=1
-    #jax.debug.visualize_array_sharding(envstates)
+        #jax.debug.visualize_array_sharding(envstates)
+
+    window = drawwindow(600,600)
+
     goalinitstates = jax.vmap(lambda stt: stt[0])(envstates)
     agentinitstates = jax.vmap(lambda stt: stt[1])(envstates)
-    while i < episodelength:
-        window = drawwindow(windowheight,windowwidth)
-        #loss,actions = train_step(agent.policy,envstates,optimizer,collision)
-        actions = act(agent.policy,envstates)
-        envstates, collision = runstep(envstates,actions)
-        loss, outputs = lossfn(agent.policy,envstates)
-        losses.append(loss)
-        #if collision[0] != 0:
-        #    print("collision: ", collision)
-        print("loss: ", loss)
-        losses.append(loss)
-        if draw and j == episodenum -1:
-            #frames = drawframes(envstates,window)
-            firstenvcol.append(collision[0])
-            print("shape is ",jnp.array(statobjs).shape)# should be 3,2 but is 30
-            print(statobjs[3])
-            env1frame = createimages(envstates[3],window,collision[3],statobjs[3])
-            env1frames.append(env1frame)
-        if i % 50 == 0:
-            loss, actions = train_step(agent.policy,envstates,optimizer,collision)
-        i += 1
-    #allanims.append(env1frames)
-    
-    j += 1
-env1img = []
-j=1
-@jax.jit
+    return policy, optimizer, envstates,statobjs, window
+def envstep(episodeindex,envstates,statobjs, policy, losses):
+    actions = act(policy,envstates)
+    envstates, collision = runstep(envstates,actions)
+    loss, outputs = lossfn(policy,envstates)
+    losses.append(loss)
+    return envstates, statobjs, loss, collision, losses
+def drawenv(envstates, statobjs, collision, window, env1frames):
+    #frames = drawframes(envstates,window)
+    #firstenvcol.append(collision[0])
+    print("shape is ",jnp.array(statobjs).shape)# should be 3,2 but is 30
+    print(statobjs[3])
+    env1frame = createimages(envstates[3],window,collision[3],statobjs[3])
+    env1frames.append(env1frame)
 def f(state,agentstate):
     objx = jnp.array(state[0])
     objy = jnp.array(state[1])
     objrad = jnp.array(state[2])
     return jnp.where(((objx +  objrad < agentstate[0] - agentstate[2]) & (objx - objrad < agentstate[0] - agentstate[2]))
             |((objy -  objrad > agentstate[1] + agentstate[2]) & (objy +  objrad > agentstate[0] - agentstate[2])),jnp.array([objx,objy,objrad]),)
+def animate(frames):
+    j = 0
+    for frame in frames:  
+        image = plt.imshow(frame,animated=True)
+        env1img.append([image])
+        print("Drawing frame ", j)
+        j+=1
+    #write env1img to a .txt or .json or something and then have a separate script that renders that into anims with the code below?
+    ani = anim.ArtistAnimation(fig, env1img, interval=1, repeat_delay=1000)
+    ani.save("animationenv.gif", writer='pillow', fps=30)
 
-for frame in env1frames:
-    
-    image = plt.imshow(frame,animated=True)
-    #stops it running out of memory
-    env1img.append([image])
-    #    print("i is: ", i)
-    #    i += 1
-    print("j is: ", j)
-
-    #fig = plt.figure()
-    j+=1
-#write env1img to a .txt or .json or something and then have a separate script that renders that into anims with the code below?
-
-ani = anim.ArtistAnimation(fig, env1img, interval=1, repeat_delay=1000)
-ani.save("animationenv.gif", writer='pillow', fps=30)
-#if draw:
-#    ani = anim.ArtistAnimation(fig, env1img, interval=2, repeat_delay=1000)
-#    ani.save('animation.gif', writer='pillow', fps=30)
-    #plt.show()
-    #ani.save('animation.gif', writer='pillow', fps=30)
-fig, plots = plt.subplots(1,3)
-plots[0].plot(jnp.arange(0,len(losses)),losses)  
-means=[]
-i=0
-while i < len(losses):
-    mylossthing = losses[i-episodelength:i]
-    mylossthing = jnp.array(mylossthing)
-    mylossthing = jnp.mean(mylossthing)
-    means.append(mylossthing)
-    i+=episodelength
-plots[1].plot(jnp.arange(0,len(means)),means)
+def drawplots(losses,episodelength):
+    fig, plots = plt.subplots(1,3)
+    plots[0].plot(jnp.arange(0,len(losses)),losses)  
+    means=[]
+    i=0
+    while i < len(losses):
+        lossgraph = losses[i-episodelength:i]
+        lossgraph = jnp.array(lossgraph)
+        lossgraph = jnp.mean(lossgraph)
+        means.append(lossgraph)
+        i+=episodelength
+    plots[1].plot(jnp.arange(0,len(means)),means)
+    plt.savefig("plots.png")
 
 
 
-((xmin,xmax), (ymin,ymax), density) = jax.vmap(lambda stt: ((stt[0]-rad,stt[0]+rad),(stt[1]-rad,stt[1]+rad),1))(goalinitstates)
-xs, ys = (xmin,xmax),(ymin,ymax)
-goalinitstates = jnp.array(jax.vmap(lambda sts:[sts[0].astype(int),sts[1].astype(int)])(goalinitstates))
-heatmap = sb.heatmap(goalinitstates,annot=False,cmap='viridis')
-plots[2] = heatmap
-plt.savefig("plots.png")
-print(firstenvcol)
+    #((xmin,xmax), (ymin,ymax), density) = jax.vmap(lambda stt: ((stt[0]-rad,stt[0]+rad),(stt[1]-rad,stt[1]+rad),1))(goalinitstates)
+    #xs, ys = (xmin,xmax),(ymin,ymax)
+    #goalinitstates = jnp.array(jax.vmap(lambda sts:[sts[0].astype(int),sts[1].astype(int)])(goalinitstates))
+    #heatmap = sb.heatmap(goalinitstates,annot=False,cmap='viridis')
+    #plots[2] = heatmap
+    #plt.savefig("plots.png")
+    #print(firstenvcol)

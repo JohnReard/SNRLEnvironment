@@ -55,15 +55,15 @@ def drawframes(envstates,window):
     return frames
 
 #fig1 = plt.figure()
-def envinit(objnum, objrad, policy, optimizer, seed, envnum):
+def envinit(objnum, objrad, seed, envnum):
     #init
     limits = jnp.array([0,600]) 
     seed = seed*seed
     featurenum = 2 * (objnum+2)
     envstates, statobjs = create_envbatch(seed, envnum,limits,objnum,objrad,3)
     #init policy
-    policy = policy(rngs = nnx.Rngs(0), n_features= featurenum)
-    optimizer = nnx.Optimizer(policy, tx=optimizer,wrt=nnx.Param)
+    
+    
     #sharding
     splitstates = jnp.split(envstates, len(devices))
     devind = 0
@@ -84,7 +84,7 @@ def envinit(objnum, objrad, policy, optimizer, seed, envnum):
     sfmcounter = jax.random.uniform(sfmkeys,minval=1,maxval=50, shape=(len(envstates),objnum,2))
     goalinitstates = jax.vmap(lambda stt: stt[0])(envstates)
     agentinitstates = jax.vmap(lambda stt: stt[1])(envstates)
-    return (envstates,statobjs, randomgoals, objrad, limits, sfmcounter), optimizer, window, policy
+    return (envstates,statobjs, randomgoals, objrad, limits, sfmcounter), window, featurenum
 def envstep(inits,policy,stepindex,episodeindex,losses,goallog):
     envstates, statobjs, randomgoals, objrad, limits, sfmcounter = inits
     print("envstates are: ",envstates[3])
@@ -110,8 +110,8 @@ def envstep(inits,policy,stepindex,episodeindex,losses,goallog):
 def drawenv(envstates, statobjs, collision, window, env1frames):
     #frames = drawframes(envstates,window)
     #firstenvcol.append(collision[0])
-    print("shape is ",jnp.array(statobjs).shape)# should be 3,2 but is 30
-    print(statobjs[3])
+    #print("shape is ",jnp.array(statobjs).shape)# should be 3,2 but is 30
+    #print(statobjs[3])
     env1frame = createimages(envstates[3],window,collision[3],statobjs[3])
     env1frames.append(env1frame)
 def f(state,agentstate):

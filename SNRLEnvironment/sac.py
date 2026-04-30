@@ -24,7 +24,7 @@ class valuenetwork(nnx.Module):
         self.l2 = nnx.Linear(hidden,hidden, rngs=rngs)
         self.l3 = nnx.Linear(hidden,hidden, rngs=rngs)
         self.l4 = nnx.Linear(hidden,targets, rngs=rngs)
-    def __call__(self):
+    def __call__(self, x):
         x = self.l1(nnx.relu(x))
         x = self.l2(nnx.relu(x))
         x = self.l3(nnx.relu(x))

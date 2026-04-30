@@ -175,6 +175,7 @@ def correctillegalstates(seed, environments, objnum, objsize, limits,envnum, sta
     randintsmob = jax.random.uniform(key, shape=(envnum,objnum+2,2),minval=limits[0]+objsize,maxval=limits[1]-objsize)
     randintsmob=jnp.array(randintsmob)
     
+    
     #create array of objects where 0 = no collision 1 = collision
     collisions = jax.vmap(detectcollisions)(environments)
     collisionsstat = jnp.array(jax.vmap(detectstatcollisions)(oldvertices,environments))

@@ -11,10 +11,12 @@ import matplotlib
 import matplotlib.animation as anim
 from matplotlib.animation import FFMpegWriter
 import seaborn as sb
+import gymnasium as gym
 from Env1 import lossfn, act
 
 from flax import nnx as nnx
 import optax
+import numpy as np
 import os 
 jax.config.update("jax_enable_x64", True)
 #creates key for subkeys to be made from
@@ -36,7 +38,23 @@ env1img = []
 env1frames = []
 #window = drawwindow(windowheight,windowwidth)
 fig = plt.figure()
+class SNRLEnv(gym.Env):
+    def __intit__(self, size, objnum):
+        self.size = size
+        #placeholder values will be replaced in reset
+        self._agent_location = np.array([1,1,1])
+        self._target_location = np.array([1,1,1])
 
+        self.observation_space = gym.spaces.Box(0, size, shape=(objnum,3), dtype=int)
+    def reset(self, seed=None, options=None):
+        #called every time batch is inited
+        create_envbatch()
+        obs = 
+        return np.array(obs), {} 
+    def step(self, action):
+        envstep()
+        obs, reward, terminated, truncated = 
+        return np.array(obs), float(reward), terminated, truncated, {}
 @jax.jit
 def runstep(currentstates,actions,randomgoals,limits):
     #step through states, note currentstates[1] is the agent states and currentstates[0] is the goal states
